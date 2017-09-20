@@ -182,18 +182,18 @@ function set_interface_up() {
     check="fail"
 
     while [[ $check = "fail" ]]; do
-        echo -e "${NORMAL}Do you want to randomise ${BOLD}$IFACE ${NORMAL}MAC address(can cause troubles)? (y/n)${AQUA}"
+        echo -e "${NORMAL}Do you want to randomise ${BOLD}$IFACE ${NORMAL}MAC address (can cause troubles)? (y/n)${AQUA}"
         read -p "wirespy> " choice
 
         if [[ $choice = "y" ]]; then
             echo -e "${INFO}[*] Macchanging $IFACE..."
             ip link set "$IFACE" down && macchanger -A "$IFACE" && ip link set "$IFACE" up
-            echo -e "${WARNING}If having problems, RESTART networking(/etc/init.d/network restart), or use wicd(wicd-client)"
+            echo -e "${WARNING}If having problems, RESTART networking (/etc/init.d/network restart), or use wicd (wicd-client)"
             check="success"
         elif [[ $choice = "n" ]]; then
             check="success"
         else
-            echo -e "${WARNING}Type by yes(y) or no(n)"
+            echo -e "${WARNING}Type by yes (y) or no (n)"
         fi
     done
     check="fail"
@@ -229,7 +229,7 @@ function set_interface_up() {
     check="fail"
 
     while [[ $check = "fail" ]]; do
-        echo -e "${NORMAL}Do you want to randomise ${BOLD}$MIFACE ${NORMAL}MAC address(recommanded)? (y/n)${AQUA}"
+        echo -e "${NORMAL}Do you want to randomise ${BOLD}$MIFACE ${NORMAL}MAC address (recommanded)? (y/n)${AQUA}"
         read -p "wirespy> " choice
 
         if [[ $choice = "y" ]]; then
@@ -301,12 +301,12 @@ function set_rogue_AP_up() {
     check="fail"
 
     while [[ $check = "fail" ]]; do
-        echo -e "${NORMAL}Access point WEP authentication?(y/n)${AQUA}"
+        echo -e "${NORMAL}Access point WEP authentication? (y/n)${AQUA}"
         read -p "wirespy> " choice
 
         if [[ $attack_type = 1 ]]; then
             if [[ $choice = "y" ]]; then
-                echo -e "${NORMAL}Enter a valid WEP password(10 hexadecimal characters):${AQUA}"
+                echo -e "${NORMAL}Enter a valid WEP password (10 hexadecimal characters):${AQUA}"
                 read -p "wirespy> " WEP 
                 
                 xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID -P $MIFACE | tee ./conf/tmp.txt 2> /dev/null" &
@@ -321,7 +321,7 @@ function set_rogue_AP_up() {
 
         elif [[ $attack_type = 2 ]]; then
             if [[ $choice = "y" ]]; then
-                echo -e "${NORMAL}Enter a valid WEP password(10 hexadecimal characters)${AQUA}"
+                echo -e "${NORMAL}Enter a valid WEP password (10 hexadecimal characters)${AQUA}"
                  read -p "wirespy> " WEP 
 
                 xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID $MIFACE | tee ./conf/tmp.txt 2> /dev/null" &
@@ -347,7 +347,7 @@ function set_rogue_AP_up() {
 
     check_interface "$TIFACE"
     if [[ $check = "fail" ]]; then
-        echo -e "${WARNING}An airbase-ng error occured(could not create the tap interface)"
+        echo -e "${WARNING}An airbase-ng error occured (could not create the tap interface)"
         echo -e "${WARNING}Exiting..."
         sleep 4
         quit
@@ -370,7 +370,7 @@ function set_eviltwin_up() {
     read -p "wirespy> " eviltwin_BSSID
 
     while [[ $check = "fail" ]]; do
-        echo -e "${NORMAL}Wireless channel to use(1-12)?(use the good twin wireless channel)${AQUA}"
+        echo -e "${NORMAL}Wireless channel to use (1-12)? (use the good twin wireless channel)${AQUA}"
          read -p "wirespy> " WCHAN
 
         case $WCHAN in
@@ -393,7 +393,7 @@ function set_eviltwin_up() {
 
     check_interface "$TIFACE"
     if [[ $check = "fail" ]]; then
-        echo -e "${WARNING}An airbase-ng error occured(could not create the tap interface)"
+        echo -e "${WARNING}An airbase-ng error occured (could not create the tap interface)"
         echo -e "${WARNING}Exiting..."
         sleep 4
         quit
@@ -538,7 +538,7 @@ function boost_interface() {
 
     ip link set "$super_WIFACE" down && iw reg set BO && ip link set "$super_WIFACE up" 
 
-    echo -e "${NORMAL}How much do you want to boost the power of $super_WIFACE(up to 30dBm)?${AQUA}"
+    echo -e "${NORMAL}How much do you want to boost the power of $super_WIFACE (up to 30dBm)?${AQUA}"
     read -p "wirespy> " boost
 
     echo -e "${INFO}[*] $super_WIFACE powering up"
