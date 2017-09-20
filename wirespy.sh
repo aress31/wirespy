@@ -182,7 +182,7 @@ function set_interface_up() {
     check="fail"
 
     while [[ $check = "fail" ]]; do
-        echo -e "${NORMAL}Do you want to change ${BOLD}$IFACE ${NORMAL}MAC address(can cause troubles)?(y/n)${AQUA}"
+        echo -e "${NORMAL}Do you want to randomise ${BOLD}$IFACE ${NORMAL}MAC address(can cause troubles)? (y/n)${AQUA}"
         read -p "wirespy> " choice
 
         if [[ $choice = "y" ]]; then
@@ -229,7 +229,7 @@ function set_interface_up() {
     check="fail"
 
     while [[ $check = "fail" ]]; do
-        echo -e "${NORMAL}Do you want to change ${BOLD}$MIFACE ${NORMAL}MAC address(recommanded)?(y/n)${AQUA}"
+        echo -e "${NORMAL}Do you want to randomise ${BOLD}$MIFACE ${NORMAL}MAC address(recommanded)? (y/n)${AQUA}"
         read -p "wirespy> " choice
 
         if [[ $choice = "y" ]]; then
@@ -578,7 +578,8 @@ function quit() {
     exit
 }
 
-# check that the user is root
+
+# check that the script is run with root privileges
 if [[ $EUID -ne 0 ]]; then
     echo -e "${WARNING}This script must be run as root"
     exit 1
