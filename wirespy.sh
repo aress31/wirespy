@@ -106,7 +106,7 @@ function main_menu() {
 
     elif [[ $choice = 3 ]]; then
         if [[ $is_AP = "false" ]]; then
-            echo -e "${WARNING}You first need to set up an access point!"
+            echo -e "${WARNING}You first need to set up an access point"
             sleep 4
             main_menu
         else
@@ -123,7 +123,7 @@ function main_menu() {
 
     elif [[ $choice = 4 ]]; then
         if [[ $is_AP = "false" ]]; then
-            echo -e "${WARNING}You need first to set up an access point!"
+            echo -e "${WARNING}You need first to set up an access point"
             sleep 4
             main_menu
         else
@@ -140,7 +140,7 @@ function main_menu() {
 
     elif [[ $choice = 5 ]]; then
         if [[ $is_AP = "false" ]]; then
-            echo -e "${WARNING}You need first to set up an access point!"
+            echo -e "${WARNING}You need first to set up an access point"
             sleep 4
             main_menu
         else
@@ -188,12 +188,12 @@ function set_interface_up() {
         if [[ $choice = "y" ]]; then
             echo -e "${INFO}[*] Macchanging $IFACE..."
             ip link set "$IFACE" down && macchanger -A "$IFACE" && ip link set "$IFACE" up
-            echo -e "${WARNING}If having problems, RESTART networking(/etc/init.d/network restart), or use wicd(wicd-client)."
+            echo -e "${WARNING}If having problems, RESTART networking(/etc/init.d/network restart), or use wicd(wicd-client)"
             check="success"
         elif [[ $choice = "n" ]]; then
             check="success"
         else
-            echo -e "${WARNING}Type by yes(y) or no(n)!"
+            echo -e "${WARNING}Type by yes(y) or no(n)"
         fi
     done
     check="fail"
@@ -203,7 +203,7 @@ function set_interface_up() {
     show_w_intf
 
     while [[ $check = "fail" ]]; do
-        echo -e "${NORMAL}Wireless interface to use to create the access point?${AQUA}"
+        echo -e "${NORMAL}Wireless interface to use?${AQUA}"
         read -p "wirespy> " WIFACE
 
         check_interface "$WIFACE"
@@ -239,7 +239,7 @@ function set_interface_up() {
         elif [[ $choice = "n" ]]; then
             check="success"
         else
-            echo -e "${WARNING}Type by yes(y) or no(n)!"
+            echo -e "${WARNING}Type by yes(y) or no(n)"
         fi
     done
     check="fail"
@@ -263,7 +263,7 @@ ${AQUA}"
             [1-2])
                 check="success";;
             *) 
-                echo -e "${WARNING}Type ${BOLD}Blackhole(1)${NORMAL}${WARNING} or ${BOLD}Bullzeye(2)${NORMAL}${WARNING}!${AQUA}"
+                echo -e "${WARNING}Type ${BOLD}Blackhole(1)${NORMAL}${WARNING} or ${BOLD}Bullzeye(2)${NORMAL}${WARNING}${AQUA}"
                 check="fail";;
         esac
     done
@@ -294,7 +294,7 @@ function set_rogue_AP_up() {
             [1-9]|1[0-2])
                 check="success";;
             *) 
-                echo -e "${WARNING}${BOLD}$WCHAN ${NORMAL}${WARNING}is not a valid wireless channel, stupid."
+                echo -e "${WARNING}${BOLD}$WCHAN ${NORMAL}${WARNING}is not a valid wireless channel"
                 check="fail";;
         esac
     done
@@ -315,7 +315,7 @@ function set_rogue_AP_up() {
                 xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID -P $MIFACE | tee ./conf/tmp.txt 2> /dev/null" &
                 check="success"
             else
-                echo -e "${WARNING}Reply with yes (y) or no (n)!"
+                echo -e "${WARNING}Reply with yes (y) or no (n)"
                 check="fail"
             fi
 
@@ -330,7 +330,7 @@ function set_rogue_AP_up() {
                 xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID $MIFACE | tee ./conf/tmp.txt 2> /dev/null" &
                 check="success"
             else
-                echo -e "${WARNING}Reply with yes (y) or no (n)!"
+                echo -e "${WARNING}Reply with yes (y) or no (n)"
                 check="fail"
             fi
         fi
@@ -347,8 +347,8 @@ function set_rogue_AP_up() {
 
     check_interface "$TIFACE"
     if [[ $check = "fail" ]]; then
-        echo -e "${WARNING}An airbase-ng error occured(could not create the tap interface)."
-        echo -e "${WARNING}Hasta la vista, baby!"
+        echo -e "${WARNING}An airbase-ng error occured(could not create the tap interface)"
+        echo -e "${WARNING}Exiting..."
         sleep 4
         quit
     fi
@@ -357,7 +357,7 @@ function set_rogue_AP_up() {
     set_up_DHCP_srv
     
     echo -e "${INFO}[*] ${BOLD}$ESSID ${NORMAL}${INFO}is now running..."
-    echo -e "${INFO}[*] Enjoy! >:)"
+    echo -e "${INFO}[*] Hacking time has begun..."
     sleep 6
 }
 
@@ -377,7 +377,7 @@ function set_eviltwin_up() {
             [1-9]|1[0-2])
                 check="success";;
             *) 
-                echo -e "${WARNING}${BOLD}$WCHAN ${NORMAL}${WARNING}is not a valid wireless channel, stupid."
+                echo -e "${WARNING}${BOLD}$WCHAN ${NORMAL}${WARNING}is not a valid wireless channel"
                 check="fail";;
         esac
     done
@@ -393,8 +393,8 @@ function set_eviltwin_up() {
 
     check_interface "$TIFACE"
     if [[ $check = "fail" ]]; then
-        echo -e "${WARNING}An airbase-ng error occured(could not create the tap interface)."
-        echo -e "${WARNING}Hasta la vista, baby!"
+        echo -e "${WARNING}An airbase-ng error occured(could not create the tap interface)"
+        echo -e "${WARNING}Exiting..."
         sleep 4
         quit
     fi
@@ -407,7 +407,7 @@ function set_eviltwin_up() {
     set_up_DHCP_srv
     
     echo -e "${INFO}[*] ${BOLD}$eviltwin_ESSID ${NORMAL}${INFO}is now running..."
-    echo -e "${INFO}[*] Enjoy! >:)"
+    echo -e "${INFO}[*] Hacking time has begun..."
     sleep 6
 }
 
@@ -481,7 +481,7 @@ function check_interface()  {
     if [[ $(ip link show "$1" 2> /dev/null) ]]; then
         check="success"
     else
-        echo -e "${WARNING}Network interface ${BOLD}${1}${NORMAL} ${WARNING}does NOT exist!"
+        echo -e "${WARNING}Network interface ${BOLD}${1}${NORMAL} ${WARNING}does NOT exist"
         check="fail"
     fi
 }  
@@ -541,7 +541,7 @@ function boost_interface() {
     echo -e "${NORMAL}How much do you want to boost the power of $super_WIFACE(up to 30dBm)?${AQUA}"
     read -p "wirespy> " boost
 
-    echo -e "${INFO}[*] $super_WIFACE powering up!"
+    echo -e "${INFO}[*] $super_WIFACE powering up"
     iw dev "$super_WIFACE" set txpower fixed "$boost"mBm
     sleep 4
 }
@@ -578,5 +578,10 @@ function quit() {
     exit
 }
 
+# check that the user is root
+if [[ $EUID -ne 0 ]]; then
+    echo -e "${WARNING}This script must be run as root"
+    exit 1
+fi
 
 main_menu
