@@ -23,12 +23,14 @@ Two type of attacks are supported at the moment:
 
 ## Usage
 1. Make the script executable:
-		
-		$ chmod +x wirespy.sh
+```
+$ chmod +x wirespy.sh
+```
 
 2. Run the script as root:
-
-		$ sudo ./wirespy.sh
+```
+$ sudo ./wirespy.sh
+```
 
 ## Dependencies
 Works out of the box using Kali Linux.
