@@ -1,5 +1,8 @@
 ![wirespy](images/wirespy_logo.png)
 # Wirespy
+[![Language](https://img.shields.io/badge/Lang-Bash-blue.svg)](https://www.python.org)
+[![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://opensource.org/licenses/Apache-2.0)
+
 ## Automate Man In The Middle Attacks (MITMAs) over WiFi.
 
 Wirespy allows attackers to set up quick honeypots to carry out MITMAs. Monitoring and logging functionalities are implemented in order to keep records of the victims traffics/activities. Other tools can be used together with Wirespy to further more advanced attacks. 
