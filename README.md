@@ -4,7 +4,6 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Automate Man In The Middle Attacks (MITMAs) over WiFi.
-
 Wirespy allows attackers to set up quick honeypots to carry out MITMAs. Monitoring and logging functionalities are implemented in order to keep records of the victims traffics/activities. Other tools can be used together with Wirespy to further more advanced attacks. 
 
 Two type of attacks are supported at the moment:
@@ -35,9 +34,9 @@ Two type of attacks are supported at the moment:
 Works out of the box using Kali Linux.
 
 ## Future Improvements
-* Add new features.
-* Debugging.
-* Source code optimisations.
+- [] Add new features.
+- [] Debugging.
+- [] Source code optimisations.
 
 ## Project Information
 This script was developed in the context of my master thesis work in June 2015.
