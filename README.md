@@ -34,9 +34,9 @@ Two type of attacks are supported at the moment:
 Works out of the box using Kali Linux.
 
 ## Future Improvements
-- [] Add new features.
-- [] Debugging.
-- [] Source code optimisations.
+- [ ] Add new features.
+- [ ] Debugging.
+- [ ] Source code optimisations.
 
 ## Project Information
 This script was developed in the context of my master thesis work in June 2015.
