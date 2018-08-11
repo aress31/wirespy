@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-#    Copyright (C) 2015 Alexandre Teyar
+#    Copyright (C) 2015-2018 Alexandre Teyar
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -93,13 +93,15 @@ function menu() {
     2)  Perform an evil-twin attack
     3)  Start/stop DHCP server
     4)  Start/stop network capture
-    5)  Start/stop DNS poisonning (in developpement)
+    5)  Start/stop DNS poisoning (in development)
     6)  Boost wireless card power
     99) Exit WireSpy 
 
-    Press 'CTRL+C' at anytime to exit
+    Press 'CTRL+C' at any time to exit
     "
-    
+
+    AP_PREREQUISITE="To use this option, first configure an access-point"
+
     # Find a more elegant solution...
     while :; do
         read -p "$(echo -e $PROMPT) " choice
@@ -122,7 +124,7 @@ function menu() {
 
         elif [[ $choice = 3 ]]; then
             if [[ $isAP = "false" ]]; then
-                print_warning "To use this option, an access-point needs to be configured first"
+                print_warning $AP_PREREQUISITE
             else
                 if [[ $isDHCP = "false" ]]; then
                     start_DHCP_server
@@ -133,7 +135,7 @@ function menu() {
 
         elif [[ $choice = 4 ]]; then
             if [[ $isAP = "false" ]]; then
-                print_warning "To use this option, an access-point needs to be configured first"
+                print_warning $AP_PREREQUISITE
             else
                 if [[ $isSniffing = "false" ]]; then
                     start_network_capture
@@ -144,7 +146,7 @@ function menu() {
 
         elif [[ $choice = 5 ]]; then
             if [[ $isAP = "false" ]]; then
-                print_warning "To use this option, an access-point needs to be configured first"
+                print_warning $AP_PREREQUISITE
             else
                 if [[ $isDNS = "false" ]]; then
                     start_DNS_poisonning
@@ -182,7 +184,7 @@ function configure_intfs() {
     done
     res=1
 
-    echo "Do you want to randomise $INTF MAC address (this can cause troubles)? Answer with y (yes) or n (no)"
+    echo "Do you want to randomise $INTF MAC address (this can cause problems)? Answer with y (yes) or n (no)"
 
     while [[ $pass != "true" ]]; do
         read -p "$(echo -e $PROMPT) " choice
@@ -190,7 +192,7 @@ function configure_intfs() {
         if [[ $choice = "y" ]]; then
             print_info "Macchanging $INTF"
             ip link set "$INTF" down && macchanger -A "$INTF" && ip link set "$INTF" up
-            print_warning "If having problems, RESTART networking (/etc/init.d/network restart), or use wicd (wicd-client)"
+            print_warning "In case of problems, RESTART networking (/etc/init.d/network restart), or use wicd (wicd-client)"
             pass="true"
         elif [[ $choice = "n" ]]; then
             pass="true"
@@ -212,7 +214,7 @@ function configure_intfs() {
         res=$?
 
         if [[ $WINTF = "$INTF" ]]; then
-            print_warning "$INTF is already in use, use another inteface..."
+            print_warning "$INTF is already in use, choose another inteface..."
             res=1
         fi
     done
@@ -233,7 +235,7 @@ function configure_intfs() {
         exit 1
     fi
 
-    echo "Do you want to randomise $MINTF MAC address (recommanded)? Answer with y (yes) or n (no)"
+    echo "Do you want to randomise $MINTF MAC address (recommended)? Answer with y (yes) or n (no)"
 
     while [[ $pass != "true" ]]; do
         read -p "$(echo -e $PROMPT) " choice
@@ -279,11 +281,11 @@ The Bullzeye access point type will respond only to the probe requests specifyin
 
 function menu_eviltwin() {
     echo "
-This attack consists in creating an evil copy of an access point and keep sending deauth packets to its clients to force them to connect to our evil copy.
-Consequently, choose the same ESSID and wireless channel than the targeted access point.
+This attack consists in creating an evil copy of an access point and repeatedly sending deauth packets to its clients to force them to connect to our evil copy.
+Consequently, choose the same ESSID and wireless channel as the targeted access point.
 
-To properly perform this attack the attacker should first pass out all the in-range access point copy the BSSID, the ESSID and the channel of the target then create its twin
-and finally deauthentificate all the clients from the righfully access point network so they may connect to ours.
+To properly perform this attack the attacker should first scan all the in-range access points to select a target. Next step is to copy the BSSID, ESSID and channel of the selected target access point, to create its twin.
+The final step is to deauthenticate all the clients from the target access point, so that the victims may connect to the evil twin.
 "
 }
 
