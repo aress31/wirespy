@@ -19,28 +19,30 @@ VERSION=0.4
 
 # Colors and output formatting
 BOLD='\e[1m'
-RESET='\e[0m'
+RESET_ALL='\e[0m'
+RESET_BOLD='\e[21m'
 UNDERLINED='\e[4m'
 
-FG_CYAN='\e[36m'
 FG_BLACK='\e[30m'
+FG_CYAN='\e[36m'
 FG_YELLOW='\e[33m'
+FG_WHITE='\e[97m'
 
+BG_BLUE='\e[44m'
 BG_CYAN='\e[46m'
 BG_DARKGREY='\e[100m'
-BG_RED='\e[41m'
 BG_GREEN='\e[42m'
-BG_BLUE='\e[44m'
+BG_RED='\e[41m'
 BG_YELLOW='\e[43m'
 
-PROMPT="${BG_CYAN}${BOLD}wirespy$RESET »"
-PROMPT_EVILTWIN="{BG_CYAN}${BOLD}wirespy > ${FG_BLACK}eviltwin$RESET »"
-PROMPT_HONEYPOT="${BG_CYAN}${BOLD}wirespy > ${FG_BLACK}eviltwin$RESET »"
+PROMPT="${BG_CYAN}${FG_WHITE}${BOLD}wirespy$RESET_ALL »"
+PROMPT_EVILTWIN="${BG_CYAN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > eviltwin$RESET_ALL »"
+PROMPT_HONEYPOT="${BG_CYAN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > honeypot$RESET_ALL »"
 
-print_error()   { echo -e "${BG_RED}${BOLD}[!] $1$RESET"; }
+print_error()   { echo -e "${BG_RED}${BOLD}[!] $1$RESET_ALL"; }
 print_info()    { echo -e "[*] $1"; }
-print_intf()    { echo -e "${FG_CYAN}${BOLD}$1$RESET"; }
-print_warning() { echo -e "${FG_YELLOW}[-] $1$RESET"; }
+print_intf()    { echo -e "${FG_CYAN}${BOLD}$1$RESET_ALL"; }
+print_warning() { echo -e "${FG_YELLOW}[-] $1$RESET_ALL"; }
 
 # Global variables
 isAP="false"
@@ -448,7 +450,7 @@ function set_up_DHCP_srv() {
     ip route flush dev "$TINTF"
     ip route add 10.0.0.0/24 via 10.0.0.254 dev "$TINTF"
 
-    # Reset any pre-existing dhcp leases
+    # RESET_ALL any pre-existing dhcp leases
     cat /dev/null > /var/lib/dhcp/dhcpd.leases
     cat /dev/null > /tmp.txt/dhcpd.conf
 
@@ -471,7 +473,7 @@ function display_intf() {
         for intf in $intfs; do # get the network interfaces names
             IP=$(ip -o -f inet add show "$intf" | awk '{print $4}')
             MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
-            print_intf "${intf}:\t $IP $MAC"
+            print_intf "${intf}: $IP $MAC"
         done
     else
         print_error "No networking interface detected"
@@ -490,7 +492,7 @@ function display_wintf() {
         for wintf in $wintfs; do # get the interfaces names
             IP=$(ip -o -f inet add show "$wintf" | awk '{print $4}')
             MAC=$(ip link show "$wintf" | awk '/ether/ {print $2}')
-            print_intf "${intf}:\t $IP $MAC"
+            print_intf "${intf}: $IP $MAC"
         done
     else
         print_error "No wireless interface detected"
