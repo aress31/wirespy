@@ -18,26 +18,35 @@
 VERSION=0.4
 
 # Colors and output formatting
-AQUA="\\e[36m"
-DEFAULT="\\e[0m"
-LIGHTBLUE="\\e[94m"
-LIGHTGREEN="\\e[92m"
-LIGHTRED="\\e[91m"
-LIGHTYELLOW="\\e[93m"
+BOLD='\e[1m'
+RESET='\e[0m'
+UNDERLINED='\e[4m'
 
-PROMPT="wirespy > "
+FG_CYAN='\e[36m'
+FG_BLACK='\e[30m'
+FG_YELLOW='\e[33m'
 
-print_error()   { echo -e "[!] $1"; }
+BG_CYAN='\e[46m'
+BG_DARKGREY='\e[100m'
+BG_RED='\e[41m'
+BG_GREEN='\e[42m'
+BG_BLUE='\e[44m'
+BG_YELLOW='\e[43m'
+
+PROMPT="${BG_CYAN}${BOLD}wirespy$RESET »"
+PROMPT_EVILTWIN="{BG_CYAN}${BOLD}wirespy > ${FG_BLACK}eviltwin$RESET »"
+PROMPT_HONEYPOT="${BG_CYAN}${BOLD}wirespy > ${FG_BLACK}eviltwin$RESET »"
+
+print_error()   { echo -e "${BG_RED}${BOLD}[!] $1$RESET"; }
 print_info()    { echo -e "[*] $1"; }
-print_intf()    { echo -e "$1"; }
-print_warning() { echo -e "[-] $1"; }
+print_intf()    { echo -e "${FG_CYAN}${BOLD}$1$RESET"; }
+print_warning() { echo -e "${FG_YELLOW}[-] $1$RESET"; }
 
 # Global variables
 isAP="false"
 isDHCP="false"
 isDNS="false"
 isSniffing="false"
-pass="false"
 
 attack_type="null"
 
@@ -80,7 +89,7 @@ function menu() {
 
     1)  Launch a rogue access point (honeypot)
     2)  Perform an evil-twin attack
-    3)  Show/hide DHCP leases
+    3)  Start/stop DHCP server
     4)  Start/stop network capture
     5)  Start/stop DNS poisonning (in developpement)
     6)  Boost wireless card power
@@ -90,19 +99,21 @@ function menu() {
     "
     
     # Find a more elegant solution...
-    while true; do
-        read -p "$PROMPT" choice
+    while :; do
+        read -p "$(echo -e $PROMPT) " choice
 
         if [[ $choice = 1 ]]; then
             clean_up > /dev/null
-            configure_intf
+            PROMPT=$PROMPT_HONEYPOT
+            configure_intfs
             menu_honeypot
             configure_honeypot
             isAP="true"
 
         elif [[ $choice = 2 ]]; then
             clean_up > /dev/null
-            configure_intf
+            PROMPT=$PROMPT_EVILTWIN
+            configure_intfs
             menu_eviltwin
             configure_eviltwin
             isAP="true"
@@ -110,19 +121,17 @@ function menu() {
         elif [[ $choice = 3 ]]; then
             if [[ $isAP = "false" ]]; then
                 print_warning "To use this option, an access-point needs to be configured first"
-                sleep 4
             else
                 if [[ $isDHCP = "false" ]]; then
-                    show_DHCP
+                    start_DHCP_server
                 else
-                    hide_DHCP
+                    stop_DHCP_server
                 fi
             fi
 
         elif [[ $choice = 4 ]]; then
             if [[ $isAP = "false" ]]; then
                 print_warning "To use this option, an access-point needs to be configured first"
-                sleep 4
             else
                 if [[ $isSniffing = "false" ]]; then
                     start_network_capture
@@ -134,7 +143,6 @@ function menu() {
         elif [[ $choice = 5 ]]; then
             if [[ $isAP = "false" ]]; then
                 print_warning "To use this option, an access-point needs to be configured first"
-                sleep 4
             else
                 if [[ $isDNS = "false" ]]; then
                     start_DNS_poisonning
@@ -144,32 +152,38 @@ function menu() {
             fi
 
         elif [[ $choice = 6 ]]; then
+            PROMPT="$PROMPT power-up > "
             intf_boost
 
         elif [[ $choice = 99 ]]; then
             quit
 
         else
-            print_warning "Unknown option: $choice"
+            print_warning "Invalid option: $choice"
         fi
     done
 }
 
 
-function configure_intf() {
-    show_intf
+function configure_intfs() {
+    local pass="false"
+    local res=1
 
-    while [[ $pass = "false" ]]; do
-        echo "WAN-facing interface?"
-        read -p "$PROMPT" INTF
-         
+    display_intf
+
+    echo "Internet facing interface?"
+
+    while [[ $res != 0 ]]; do
+        read -p "$(echo -e $PROMPT) " INTF
         check_intf "$INTF"
+        res=$?
     done
-    pass="false"
+    res=1
 
-    while [[ $pass = "false" ]]; do
-        echo "Do you want to randomise $INTF MAC address (this can cause troubles)? Answer with y (yes) or n (no)"
-        read -p "$PROMPT" choice
+    echo "Do you want to randomise $INTF MAC address (this can cause troubles)? Answer with y (yes) or n (no)"
+
+    while [[ $pass != "true" ]]; do
+        read -p "$(echo -e $PROMPT) " choice
 
         if [[ $choice = "y" ]]; then
             print_info "Macchanging $INTF"
@@ -179,44 +193,48 @@ function configure_intf() {
         elif [[ $choice = "n" ]]; then
             pass="true"
         else
-            print_warning "Unknown option: $choice"
+            print_warning "Invalid answer: $choice"
         fi
     done
     pass="false"
 
     # prevent wlan adapter soft blocking
     rfkill unblock wifi
-    show_w_intf
+    display_wintf
 
-    while [[ $pass = "false" ]]; do
-        echo "Wireless interface to use?"
-        read -p "$PROMPT" WINTF
+    echo "Wireless interface to use?"
 
+    while [[ $res != 0 ]]; do
+        read -p "$(echo -e $PROMPT) " WINTF
         check_intf "$WINTF"
+        res=$?
 
         if [[ $WINTF = "$INTF" ]]; then
             print_warning "$INTF is already in use, use another inteface..."
-            pass="false"
+            res=1
         fi
     done
-    pass="false"
+    res=1
 
     # put the wireless interface in "monitor" mode
     print_info "Starting monitor mode on $WINTF"
     ip link set "$WINTF" down && iw dev "$WINTF" set type monitor && ip link set "$WINTF" up
     MINTF=${WINTF}
-    # crucial, to let WINTF come up before macchanging
+    # crucial to let WINTF come up before macchanging
     sleep 2
 
     check_intf "$MINTF"
-    if [[ $pass = "false" ]]; then
-        configure_intf
-    fi
-    pass="false"
+    res=$?
 
-    while [[ $pass = "false" ]]; do
-        echo "Do you want to randomise $MINTF MAC address (recommanded)? Answer with y (yes) or n (no)"
-        read -p "$PROMPT" choice
+    if [[ $res != 0 ]]; then
+        print_error "$WINTF could not enter in monitor mode"
+        exit 1
+    fi
+
+    echo "Do you want to randomise $MINTF MAC address (recommanded)? Answer with y (yes) or n (no)"
+
+    while [[ $pass != "true" ]]; do
+        read -p "$(echo -e $PROMPT) " choice
 
         if [[ $choice = "y" ]]; then
             print_info "Macchanging $MINTF"
@@ -225,10 +243,9 @@ function configure_intf() {
         elif [[ $choice = "n" ]]; then
             pass="true"
         else
-            print_warning "Unknown option: $choice"
+            print_warning "Invalid answer: $choice"
         fi
     done
-    pass="false"
 }
 
 
@@ -242,18 +259,19 @@ The Bullzeye access point type will respond only to the probe requests specifyin
     2) Bullzeye
     "
 
-    while [[ $pass = "false" ]]; do
-        read -p "$PROMPT" choice
+    local pass="false"
+
+    while [[ $pass != "true" ]]; do
+        read -p "$(echo -e $PROMPT) " choice
 
         case $attack_type in
             [1-2])
                 pass="true";;
             *) 
-                print_warning "Unknown option: $attack_type"
+                print_warning "Invalid option: $attack_type"
                 pass="false";;
         esac
     done
-    pass="false"
 }
 
 
@@ -268,13 +286,16 @@ and finally deauthentificate all the clients from the righfully access point net
 }
 
 
-function configure_honeypot() {    
-    echo "Access point ESSID?"
-    read -p "$PROMPT" ESSID
+function configure_honeypot() {
+    local pass="false"
+    local res=1
 
-    while [[ $pass = "false" ]]; do
+    echo "Access point ESSID?"
+    read -p "$(echo -e $PROMPT) " ESSID
+
+    while [[ $pass != "true" ]]; do
         echo "Wireless channel to use (1-12)?"
-        read -p "$PROMPT" WCHAN
+        read -p "$(echo -e $PROMPT) " WCHAN
 
         case $WCHAN in 
             [1-9]|1[0-2])
@@ -286,14 +307,14 @@ function configure_honeypot() {
     done
     pass="false"
 
-    while [[ $pass = "false" ]]; do
+    while [[ $pass != "true" ]]; do
         echo "Enable WEP authentication for the access-point? Answer with y (yes) or n (no)"
-        read -p "$PROMPT" choice
+        read -p "$(echo -e $PROMPT) " choice
 
         if [[ $attack_type = 1 ]]; then
             if [[ $choice = "y" ]]; then
                 echo "Enter a valid WEP password (10 hexadecimal characters):"
-                read -p "$PROMPT" WEP 
+                read -p "$(echo -e $PROMPT) " WEP 
                 
                 xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID -P $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
                 pass="true"
@@ -301,14 +322,14 @@ function configure_honeypot() {
                 xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID -P $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
                 pass="true"
             else
-                print_warning "Unknown option: $choice"
+                print_warning "Invalid answer: $choice"
                 pass="false"
             fi
 
         elif [[ $attack_type = 2 ]]; then
             if [[ $choice = "y" ]]; then
                 echo "Enter a valid WEP password (10 hexadecimal characters)"
-                read -p "$PROMPT" WEP 
+                read -p "$(echo -e $PROMPT) " WEP 
 
                 xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
                 pass="true"
@@ -316,12 +337,11 @@ function configure_honeypot() {
                 xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
                 pass="true"
             else
-                print_warning "Unknown option: $choice"
+                print_warning "Invalid answer: $choice"
                 pass="false"
             fi
         fi
     done
-    pass="false"
 
     # crucial, to let TINTF come up before setting it up
     sleep 2                  
@@ -332,7 +352,9 @@ function configure_honeypot() {
     TINTF=$(grep "Created tap interface" ./conf/tmp.txt | awk '{print $5}')
 
     check_intf "$TINTF"
-    if [[ $pass = "false" ]]; then
+    res=$?
+
+    if [[ $res != 0 ]]; then
         print_error "An error occured with airbase-ng, no tap interface was created"
         sleep 4
         quit
@@ -347,15 +369,18 @@ function configure_honeypot() {
 
 
 function configure_eviltwin() {
+    local pass="false"
+    local res=1
+
     echo "ESSID for the evil-twin?"
-    read -p "$PROMPT" eviltwin_ESSID
+    read -p "$(echo -e $PROMPT) " eviltwin_ESSID
 
     echo "BSSID for the evil-twin?"
-    read -p "$PROMPT" eviltwin_BSSID
+    read -p "$(echo -e $PROMPT) " eviltwin_BSSID
 
-    while [[ $pass = "false" ]]; do
+    while [[ $pass != "true" ]]; do
         echo "Wireless channel to use (value between 1 and 12)? (use the same channel than the legitimate access-point)"
-        read -p "$PROMPT" WCHAN
+        read -p "$(echo -e $PROMPT) " WCHAN
 
         case $WCHAN in
             [1-9]|1[0-2])
@@ -365,20 +390,21 @@ function configure_eviltwin() {
                 pass="false";;
         esac
     done
-    pass="false"
+
     echo "$MINTF"
     xterm -fg green -title "Evil-twin - $eviltwin_ESSID" -e "airbase-ng -c $WCHAN -e $eviltwin_ESSID -P $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
 
-    sleep 4                                 # crucial, to let TINTF come up before setting it up
+    sleep 4                                 # crucial to let TINTF come up before setting it up
     xterm_AP_PID=$(pgrep --newest Eterm)    # storing the terminal pid 
 
     # extracting the tap interface
     TINTF=$(grep "Created tap interface" /conf/tmp.txt | awk '{print $5}')
 
     check_intf "$TINTF"
-    if [[ $pass = "false" ]]; then
+    res=$?
+
+    if [[ $res != 0 ]]; then
         print_error "An error occured with airbase-ng, no tap interface was created"
-        sleep 4
         quit
     fi
 
@@ -436,41 +462,55 @@ function set_up_DHCP_srv() {
 }
 
 
-function show_intf() {
+function display_intf() {
+    intfs=$(ip -o link show | awk -F': ' '{print $2}' | grep -v 'lo')
+    
     echo "Available networking interface(s):"
-    for intf in $(ip -o link show | awk -F': ' '{print $2}'); do # get the network interfaces names
-        case ${intf} in
-            lo)
-                continue;;
-            *)
-                MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
-                print_intf "${intf}:\\t $MAC";;
-        esac
-    done
+
+    if [[ $intfs ]]; then
+        for intf in $intfs; do # get the network interfaces names
+            IP=$(ip -o -f inet add show "$intf" | awk '{print $4}')
+            MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
+            print_intf "${intf}:\t $IP $MAC"
+        done
+    else
+        print_error "No networking interface detected"
+        exit 1
+    fi
 }
 
 
-function show_w_intf() {
+# use the iw utility instead of the ip utility
+function display_wintf() {
+    wintfs=$(ip -o link show | awk -F': ' '{print $2}' | grep "wlan")
+    
     echo "Available wireless interface(s):"
-    for intf in $(ip -o link show | awk -F': ' '{print $2}' | grep "wlan"); do # get the interfaces names
-        MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
-        print_intf "${intf}:\\t $MAC"
-    done
+
+    if [[ $wintfs ]]; then
+        for wintf in $wintfs; do # get the interfaces names
+            IP=$(ip -o -f inet add show "$wintf" | awk '{print $4}')
+            MAC=$(ip link show "$wintf" | awk '/ether/ {print $2}')
+            print_intf "${intf}:\t $IP $MAC"
+        done
+    else
+        print_error "No wireless interface detected"
+        exit 1
+    fi
 }
 
 
 function check_intf() {
     if [[ $(ip link show "$1" 2> /dev/null) ]]; then
-        pass="true"
+        return 0
     else
         print_warning "Invalid interface: $1"
-        pass="false"
+        return 1
     fi
 }  
 
 
 function start_network_capture() {
-    xterm -fg green -title "TCPDump" -e "tcpdump -w ./logs/dump-$(date +%F::%T).pcap -v -i $TINTF" &
+    xterm -fg green -title "TCPDump" -e "tcpdump -i $TINTF -w ./logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap -v" &
     isSniffing="true"
 }
 
@@ -494,25 +534,28 @@ function stop_DNS_poisonning() {
 }
 
 
-function show_DHCP() {
+function start_DHCP_server() {
     xterm -fg green -title "DHCP server" -e "tail -f /var/lib/dhcp/dhcpd.leases 2> /dev/null" &
     xterm_DHCP_PID=$(pgrep --newest xterm)
     isDHCP="true"
 }
 
 
-function hide_DHCP() {
+function stop_DHCP_server() {
     pkill "$xterm_DHCP_PID" &> /dev/null
     isDHCP="false"
 }
 
 
 function intf_boost() {
-    show_w_intf
+    local pass="false"
 
-    while [[ $pass = "false" ]]; do
-        echo "Wireless interface to boost?"
-        read -p "$PROMPT" super_WINTF
+    display_wintf
+
+    echo "Which interface to boost?"
+
+    while [[ $pass != "true" ]]; do
+        read -p "$(echo -e $PROMPT) " super_WINTF
 
         check_intf "$super_WINTF"
     done
@@ -521,7 +564,7 @@ function intf_boost() {
     ip link set "$super_WINTF" down && iw reg set BO && ip link set "$super_WINTF up" 
 
     echo "How much do you want to boost the power of $super_WINTF (up to 30dBm)?"
-    read -p "$PROMPT" boost
+    read -p "$(echo -e $PROMPT) " boost
 
     print_info "$super_WINTF powering up"
     iw dev "$super_WINTF" set txpower fixed "$boost"mBm
@@ -530,9 +573,12 @@ function intf_boost() {
 
 
 function clean_up() {
+    local pass="false"
+    local res=1
+
     print_info "Terminating active processes"
     if [[ $isDHCP = "true" ]]; then
-        hide_DHCP
+        stop_DHCP_server
     elif [[ $isDNS = "true" ]]; then
         stop_DNS_poisonning
     elif [[ $isSniffing = "true" ]]; then
@@ -546,7 +592,9 @@ function clean_up() {
     rm -f ./conf/tmp.txt
 
     check_intf "$MINTF" &> /dev/null
-    if [[ $pass = "true" ]]; then
+    res=$?
+
+    if [[ $res = 0 ]]; then
         print_info "Starting managed mode on $MINTF" 
         ip link set "$MINTF" down && iw dev "$MINTF" set type managed && ip link set "$MINTF up"
         sleep 2
@@ -561,12 +609,12 @@ function quit() {
 }
 
 
-# pass that the script is run with root privileges
+# ensure that the script is running with root privileges
+# this step is necessary since WireSpy needs to be perform network changes
 if [[ $EUID -ne 0 ]]; then
     print_error "You must run this script as as root using the command: sudo bash ${0}"
     exit 1
 fi
-
 
 banner
 copyright
