@@ -61,12 +61,12 @@ TINTF="null"
 WCHAN="null"
 
 AP_PREREQUISITE='To use this option, first configure an access-point'
-EVILTWIN='This attack consists in creating an evil copy of an access point and repeatedly sending deauth packets to its clients to force them to connect to our evil copy.
+EVILTWIN='This attack consists of creating an evil copy of an access point and repeatedly sending deauth packets to its clients to force them to connect to our evil copy.
 Consequently, choose the same ESSID and wireless channel as the targeted access point.
 To properly perform this attack the attacker should first scan all the in-range access points to select a target. Next step is to copy the BSSID, ESSID and channel of the 
 selected target access point, to create its twin. 
 The final step is to deauthenticate all the clients from the target access point, so that the victims may connect to the evil twin.'
-HONEYPOT='The Blackhole access point type will respond to all probe requests (the access point may receive a lot of requests in crowded places - high charge).
+HONEYPOT='The Blackhole access point type will respond to all probe requests (the access point may receive a lot of requests in areas with high levels of WiFi activity such as crowded public places).
 The Bullzeye access point type will respond only to the probe requests specifying the access point ESSID.
 
     1) Blackhole
@@ -88,8 +88,8 @@ ${FG_GREEN}clear$RESET_FG           : clear the screen
 ${FG_GREEN}exit$RESET_FG            : exit the script
 ${FG_GREEN}launch honeypot$RESET_FG : launch a rogue access point
 ${FG_GREEN}launch eviltwin$RESET_FG : launch an evil-twin attack
-${FG_GREEN}show DHCP$RESET_FG       : display the DHCP leases
-${FG_GREEN}hide DHCP$RESET_FG       : hide the DHCP leases
+${FG_GREEN}show DHCP$RESET_FG       : display the DHCP leases log
+${FG_GREEN}hide DHCP$RESET_FG       : hide the DHCP leases log
 ${FG_GREEN}start sniff$RESET_FG     : start packet capture
 ${FG_GREEN}stop sniff$RESET_FG      : stop packet capture
 ${FG_GREEN}powerup$RESET_FG         : powerup wireless interface
@@ -134,7 +134,7 @@ function menu() {
                     if [[ $isDHCP = "false" ]]; then
                         show_DHCP
                     else
-                        print_warning "The DHCP leases logs is already being displayed"
+                        print_warning "The DHCP leases log is already being displayed"
                     fi
                 fi
                 ;;
@@ -145,7 +145,7 @@ function menu() {
                     if [[ $isDHCP = "true" ]]; then
                         hide_DHCP
                     else
-                        print_warning "The DHCP leases logs is not displayed and can therefore not be hidden"
+                        print_warning "The DHCP leases log is not displayed and can therefore not be hidden"
                     fi
                 fi
                 ;;
@@ -174,7 +174,7 @@ function menu() {
             # To be developped at some point
             # elif [[ $choice = 5 ]]; then
             #     if [[ $isAP = "false" ]]; then
-            #         print_warning "To use this option, an access-point needs to be configured first"
+            #         print_warning "To use this option, first configure an access-point"
             #     else
             #         if [[ $isDNS = "false" ]]; then
             #             start_DNS_poisonning
@@ -239,13 +239,13 @@ function configure_intfs() {
         res=$?
 
         if [[ $WINTF = "$INTF" ]]; then
-            print_warning "$INTF is already in use, choose another inteface..."
+            print_warning "$INTF is already in use, select another interface..."
             res=1
         fi
     done
     res=1
 
-    # put the wireless interface in "monitor" mode
+    # put the wireless interface into "monitor" mode
     print_info "Starting monitor mode on $WINTF"
     ip link set "$WINTF" down && iw dev "$WINTF" set type monitor && ip link set "$WINTF" up
     MINTF=${WINTF}
@@ -256,7 +256,7 @@ function configure_intfs() {
     res=$?
 
     if [[ $res != 0 ]]; then
-        print_error "$WINTF could not enter in monitor mode"
+        print_error "$WINTF could not enter monitor mode"
         exit 1
     fi
 
@@ -373,7 +373,7 @@ function configure_honeypot() {
     res=$?
 
     if [[ $res != 0 ]]; then
-        print_error "An error occured with airbase-ng, no tap interface was created"
+        print_error "An error occurred with airbase-ng, no tap interface was created"
         sleep 4
         quit
     fi
@@ -397,7 +397,7 @@ function configure_eviltwin() {
     read -p "$(echo -e $PROMPT) " eviltwin_BSSID
 
     while [[ $pass = "false" ]]; do
-        print_question "Wireless channel to use (value between 1 and 12)? (use the same channel than the legitimate access-point)"
+        print_question "Wireless channel to use (value between 1 and 12)? (use the same channel as the legitimate access-point)"
         read -p "$(echo -e $PROMPT) " WCHAN
 
         case $WCHAN in
@@ -424,7 +424,7 @@ function configure_eviltwin() {
     res=$?
 
     if [[ $res != 0 ]]; then
-        print_error "An error occured with airbase-ng, no tap interface was created"
+        print_error "An error occurred with airbase-ng, no tap interface was created"
         quit
     fi
 
