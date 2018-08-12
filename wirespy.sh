@@ -60,6 +60,7 @@ MINTF="null"
 TINTF="null"
 WCHAN="null"
 
+AIRBASE_ERROR="An error occurred with airbase-ng, no tap interface was created"
 AP_PREREQUISITE='To use this option, first configure an access-point'
 EVILTWIN='This attack consists of creating an evil copy of an access point and repeatedly sending deauth packets to its clients to force them to connect to our evil copy.
 Consequently, choose the same ESSID and wireless channel as the targeted access point.
@@ -102,41 +103,14 @@ function menu() {
         read -p "$(echo -e $PROMPT) " choice
 
         case $choice in
-            'help')
-                help
-                ;;
             'clear')
                 reset
                 ;;
             'exit')
                 quit
                 ;;
-            'launch honeypot')
-                clean_up > /dev/null
-                PROMPT=$PROMPT_HONEYPOT
-                configure_intfs
-                menu_honeypot
-                configure_honeypot
-                isAP="true"
-                ;;
-            'launch eviltwin')
-                clean_up > /dev/null
-                PROMPT=$PROMPT_EVILTWIN
-                configure_intfs
-                menu_eviltwin
-                configure_eviltwin
-                isAP="true"
-                ;;
-            'show DHCP')
-                if [[ $isAP = "false" ]]; then
-                    print_warning "$AP_PREREQUISITE"
-                else
-                    if [[ $isDHCP = "false" ]]; then
-                        show_DHCP
-                    else
-                        print_warning "The DHCP leases log is already being displayed"
-                    fi
-                fi
+            'help')
+                help
                 ;;
             'hide DHCP')
                 if [[ $isAP = "false" ]]; then
@@ -146,6 +120,37 @@ function menu() {
                         hide_DHCP
                     else
                         print_warning "The DHCP leases log is not displayed and can therefore not be hidden"
+                    fi
+                fi
+                ;;
+            'launch eviltwin')
+                clean_up > /dev/null
+                PROMPT=$PROMPT_EVILTWIN
+                configure_intfs
+                menu_eviltwin
+                configure_eviltwin
+                isAP="true"
+                ;;
+            'launch honeypot')
+                clean_up > /dev/null
+                PROMPT=$PROMPT_HONEYPOT
+                configure_intfs
+                menu_honeypot
+                configure_honeypot
+                isAP="true"
+                ;;
+            'powerup')
+                PROMPT=$PROMPT_POWERUP
+                intf_boost
+                ;;
+            'show DHCP')
+                if [[ $isAP = "false" ]]; then
+                    print_warning "$AP_PREREQUISITE"
+                else
+                    if [[ $isDHCP = "false" ]]; then
+                        show_DHCP
+                    else
+                        print_warning "The DHCP leases log is already being displayed"
                     fi
                 fi
                 ;;
@@ -174,7 +179,7 @@ function menu() {
             # To be developped at some point
             # elif [[ $choice = 5 ]]; then
             #     if [[ $isAP = "false" ]]; then
-            #         print_warning "To use this option, first configure an access-point"
+            #         print_warning "$AP_PREREQUISITE"
             #     else
             #         if [[ $isDNS = "false" ]]; then
             #             start_DNS_poisonning
@@ -182,12 +187,8 @@ function menu() {
             #             stop_DNS_poisonning
             #         fi
             #     fi
-            'powerup')
-                PROMPT=$PROMPT_POWERUP
-                intf_boost
-                ;;
             *)
-                print_warning "Unknown or invalid syntax \"$choice\", type help for the help menu."
+                print_warning "Unknown or invalid syntax \"$choice\", type help for the help menu"
                 ;;
         esac
     done
@@ -239,7 +240,7 @@ function configure_intfs() {
         res=$?
 
         if [[ $WINTF = "$INTF" ]]; then
-            print_warning "$INTF is already in use, select another interface..."
+            print_warning "$INTF is already in use, select another interface"
             res=1
         fi
     done
@@ -373,7 +374,7 @@ function configure_honeypot() {
     res=$?
 
     if [[ $res != 0 ]]; then
-        print_error "An error occurred with airbase-ng, no tap interface was created"
+        print_error "$AIRBASE_ERROR"
         sleep 4
         quit
     fi
@@ -424,7 +425,7 @@ function configure_eviltwin() {
     res=$?
 
     if [[ $res != 0 ]]; then
-        print_error "An error occurred with airbase-ng, no tap interface was created"
+        print_error "$AIRBASE_ERROR"
         quit
     fi
 
@@ -594,8 +595,8 @@ function clean_up() {
     print_info "Terminating active processes"
     if [[ $isDHCP = "true" ]]; then
         hide_DHCP
-    elif [[ $isDNS = "true" ]]; then
-        stop_DNS_poisonning
+    # elif [[ $isDNS = "true" ]]; then
+    #     stop_DNS_poisonning
     elif [[ $isSniffing = "true" ]]; then
         stop_network_capture
     fi
@@ -630,6 +631,7 @@ if [[ $EUID -ne 0 ]]; then
     print_error "You must run this script as as root using the command: sudo bash ${0}"
     exit 1
 fi
+
 
 banner
 menu
