@@ -104,7 +104,7 @@ function self_update() {
     git fetch
 
     if [[ $(git diff --name-only $BRANCH | grep ${0}) ]]; then
-        print_info "A new release has been found, updating..."
+        print_info "A new release is available, updating..."
         git checkout $BRANCH
         git pull origin $BRANCH
 
