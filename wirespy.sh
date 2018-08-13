@@ -104,14 +104,14 @@ function self_update() {
     git fetch
 
     if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]; then
-        print_info "You are running the latest stable version"
-    else
         print_info "A new release is available, updating..."
         git checkout $BRANCH
         git pull origin $BRANCH --force
 
         print_info "$0 has successfully been updated"
         exit 0
+    else
+        print_info "You are running the latest stable version"
     fi
 }
 
