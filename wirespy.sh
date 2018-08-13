@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 #    limitations under the License.
 
+# Possible improvements: autoupdate the script with the latest github version
+
 SCRIPT_VERSION=0.4
 
 BOLD='\e[1m'
@@ -103,6 +105,8 @@ function check_compatibility() {
             exit 1
         fi
     done
+
+    print_info "All required packages are already installed on the system"
 }
 
 
