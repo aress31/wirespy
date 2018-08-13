@@ -99,24 +99,19 @@ function banner() {
 }
 
 
-function self_update() {
+function check_update() {
     print_info 'Checking for an update...'
 
     if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]; then
         git fetch
 
         if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]; then
-            print_info 'New version available, updating...'
-            git checkout $0 --force
-            git pull origin $BRANCH --force
-
-            print_info "$0 has successfully been updated"
-            exit 0
+            print_info 'A new version is available, think of updating using the command: git clone https://github.com/AresS31/wirespy'
         else
             print_info 'This is the latest stable version'
         fi
     else
-        print_warning "It is recommended to get $0 on GitHub using the command: git clone https://github.com/AresS31/wirespy"
+        print_warning "It is recommended to fetch $0 on GitHub using the command: git clone https://github.com/AresS31/wirespy"
     fi
 }
 
@@ -691,6 +686,6 @@ fi
 
 
 banner
-# self_update
+check_update
 check_compatibility
 menu
