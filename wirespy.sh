@@ -40,7 +40,7 @@ BG_GREEN='\e[42m'
 BG_RED='\e[41m'
 BG_YELLOW='\e[43m'
 
-declare -gr PROMPT="${BG_GREEN}${FG_WHITE}${BOLD}wirespy$RESET_ALL »"
+declare -g  PROMPT="${BG_GREEN}${FG_WHITE}${BOLD}wirespy$RESET_ALL »"
 declare -gr PROMPT_EVILTWIN="${BG_GREEN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > eviltwin$RESET_ALL »"
 declare -gr PROMPT_HONEYPOT="${BG_GREEN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > honeypot$RESET_ALL »"
 declare -gr PROMPT_POWERUP="${BG_GREEN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > powerup$RESET_ALL »"
@@ -70,6 +70,7 @@ The Bullzeye access point type will respond only to the probe requests specifyin
 
     1) Blackhole
     2) Bullzeye'
+declare -gr INVALID_CHOICE='Invalid answer, type yes or no'
 
 declare -a required_packages=(
     'aircrack-ng'
@@ -106,7 +107,7 @@ function self_update() {
 
         if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]; then
             print_info 'New version available, updating...'
-            git checkout $0
+            git checkout $0 --force
             git pull origin $BRANCH --force
 
             print_info "$0 has successfully been updated"
@@ -264,7 +265,7 @@ function configure_intfs() {
     done
     res=1
 
-    print_question "Do you wish to randomise $INTF MAC address (this can cause problems)? Answer with y (yes) or n (no)"
+    print_question "Do you wish to randomise $INTF MAC address (this can cause problems)?"
 
     while [[ $pass = false ]]; do
         read -p "$(echo -e $PROMPT) " choice
@@ -277,7 +278,7 @@ function configure_intfs() {
         elif [[ $choice = "n" ]]; then
             pass=true
         else
-            print_warning "Invalid answer: $choice"
+            print_warning "$INVALID_CHOICE"
         fi
     done
     pass=false
@@ -315,7 +316,7 @@ function configure_intfs() {
         exit 1
     fi
 
-    print_question "Do you wish to randomise $MINTF MAC address (recommended)? Answer with y (yes) or n (no)"
+    print_question "Do you wish to randomise $MINTF MAC address (recommended)?"
 
     while [[ $pass = false ]]; do
         read -p "$(echo -e $PROMPT) " choice
@@ -327,7 +328,7 @@ function configure_intfs() {
         elif [[ $choice = "n" ]]; then
             pass=true
         else
-            print_warning "Invalid answer: $choice"
+            print_warning "$INVALID_CHOICE"
         fi
     done
 }
@@ -383,7 +384,7 @@ function configure_honeypot() {
     pass=false
 
     while [[ $pass = false ]]; do
-        print_question 'Configure WEP authentication for the access-point? Answer with y (yes) or n (no)'
+        print_question 'Configure WEP authentication for the access-point?'
         read -p "$(echo -e $PROMPT) " choice
 
         if [[ $attack_type = 1 ]]; then
@@ -397,7 +398,7 @@ function configure_honeypot() {
                 xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID -P $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
                 pass=true
             else
-                print_warning "Invalid answer: $choice"
+                print_warning "$INVALID_CHOICE"
                 pass=false
             fi
 
@@ -412,7 +413,7 @@ function configure_honeypot() {
                 xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
                 pass=true
             else
-                print_warning "Invalid answer: $choice"
+                print_warning "$INVALID_CHOICE"
                 pass=false
             fi
         fi
@@ -667,7 +668,7 @@ function clean_up() {
     res=$?
 
     if [[ $res = 0 ]]; then
-        print_info "Starting managed mode on $MINTF" 
+        print_info "Starting managed mode on $MINTF..." 
         ip link set "$MINTF" down && iw dev "$MINTF" set type managed && ip link set "$MINTF up"
         sleep 2
     fi
@@ -690,6 +691,6 @@ fi
 
 
 banner
-self_update
+# self_update
 check_compatibility
 menu
