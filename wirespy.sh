@@ -98,22 +98,28 @@ function banner() {
     echo -e "${UNDERLINED}${DIM}Author: Alexandre Teyar | LinkedIn: linkedin.com/in/alexandre-teyar | GitHub: github.com/AresS31\n$RESET_ALL"
 }
 
+
 function self_update() {
     print_info "Checking latest stable release"
 
-    git fetch
+    if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]; then
+        git fetch
 
-    if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]; then
-        print_info "A new release is available, updating..."
-        git checkout $0
-        git pull origin $BRANCH --force
+        if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]; then
+            print_info "A new release is available, updating..."
+            git checkout $0
+            git pull origin $BRANCH --force
 
-        print_info "$0 has successfully been updated"
-        exit 0
+            print_info "$0 has successfully been updated"
+            exit 0
+        else
+            print_info "You are running the latest stable version"
+        fi
     else
-        print_info "You are running the latest stable version"
+        print_warning "It is recommended to get $0 on GitHub using the command: git clone https://github.com/AresS31/wirespy"
     fi
 }
+
 
 function check_compatibility() {
     for package in "${required_packages[@]}"; do
