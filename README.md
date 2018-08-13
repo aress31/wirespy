@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="logo" src="https://raw.githubusercontent.com/AresS31/wirespy/dev/images/logo.png" height="200" />
+  <img alt="logo" src="https://raw.githubusercontent.com/AresS31/wirespy/dev/images/logo.jpg" height="200" />
   <p align="center">
   	<a href="https://www.gnu.org/software/bash/"><img alt="language" src="https://img.shields.io/badge/Lang-Bash%204.2+-blue.svg"></a>
   	<a href="https://opensource.org/licenses/Apache-2.0"><img alt="license" src="https://img.shields.io/badge/License-apache%202.0-red.svg"></a>
