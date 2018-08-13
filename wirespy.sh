@@ -108,8 +108,8 @@ function self_update() {
         git checkout $BRANCH
         git pull origin $BRANCH
 
-        print_info "$0 has been updated"
-        exit 1
+        print_info "$0 has successfully been updated"
+        exit 0
     else
         print_info "You are running the latest stable version"
     fi
