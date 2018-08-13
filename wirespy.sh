@@ -108,7 +108,7 @@ function self_update() {
     else
         print_info "A new release is available, updating..."
         git checkout $BRANCH
-        git pull origin $BRANCH
+        git pull origin $BRANCH --force
 
         print_info "$0 has successfully been updated"
         exit 0
