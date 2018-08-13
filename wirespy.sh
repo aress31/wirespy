@@ -75,10 +75,34 @@ The Bullzeye access point type will respond only to the probe requests specifyin
 
 trap quit INT
 
+#Tools vars
+declare -a required_packages=(
+    'aircrack-ng'
+    'grep'
+    'macchanger'
+    'procps'
+    'iproute2'
+    'iw'
+    'tcpdump'
+    'xterm'
+)
+
 
 function banner() {
     echo -e "${BOLD}WireSpy v$SCRIPT_VERSION${RESET_ALL} (type '${BOLD}help${RESET_ALL}' for a list of commands)"
     echo -e "${UNDERLINED}${DIM}Author: Alexandre Teyar | LinkedIn: linkedin.com/in/alexandre-teyar | GitHub: github.com/AresS31\n$RESET_ALL"
+}
+
+
+function check_compatibility() {
+    for package in "${required_packages[@]}"; do
+        if [[ $(dpkg -s $package 2> /dev/null) ]]; then
+            continue
+        else
+            print_error "The $package package is missing, install it using the command: sudo apt-get install $package"
+            exit 1
+        fi
+    done
 }
 
 
@@ -634,4 +658,5 @@ fi
 
 
 banner
+check_compatibility
 menu
