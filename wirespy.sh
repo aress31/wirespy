@@ -125,7 +125,7 @@ function check_compatibility() {
         fi
     done
 
-    print_info "All required packages are already installed on the system"
+    print_info "Required packages are installed on the system"
 }
 
 
