@@ -1,12 +1,15 @@
-![logo](images/wirespy_logo_1.png)
-# WireSpy
-[![Language](https://img.shields.io/badge/Lang-Bash%204.2+-blue.svg)](https://www.java.com)
-[![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://opensource.org/licenses/Apache-2.0)
-![License](https://img.shields.io/badge/Version-0.5-green.svg)
+<p align="center">
+  <img alt="wirespy" src="https://raw.githubusercontent.com/AresS31/wirespy/dev/images/wirespy_logo_1.png" height="200" />
+  <p align="center">
+  	<a href="https://www.gnu.org/software/bash/"><img alt="language" src="https://img.shields.io/badge/Lang-Bash%204.2+-blue.svg"></a>
+  	<a href="https://opensource.org/licenses/Apache-2.0"><img alt="license" src="https://img.shields.io/badge/License-apache%202.0-red.svg"></a>
+  	<a><img alt="version" src="https://img.shields.io/badge/Version-0.5-green.svg"></a>
+  </p>
+</p>
 
-## Automate Man-In-The-Middle-Attacks (MITMAs) over WiFi.
+## **WireSpy** enables the automation of various WiFi attacks to conduct Man-In-The-Middle-Attacks (MITMAs).
 
-**WireSpy** allows attackers to set up quick honeypots to carry out MITMAs. Monitoring and logging functionality is implemented in order to keep records of the victims' traffic/activities. Other tools can be used together with Wirespy to conduct more advanced attacks. 
+WireSpy allows attackers to set up quick honeypots to carry out **MITMAs**. Monitoring and logging functionality is implemented in order to keep records of the victims' traffic/activities. Other tools can be used together with Wirespy to conduct more advanced attacks. 
 
 Two type of attacks are supported at the moment:
 * **Honeypot:** set up a simple rogue hotspot and wait for clients to connect
