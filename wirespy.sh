@@ -16,7 +16,7 @@
 
 # Improvement select interface using cursors rather than typing it
 
-declare -gr SCRIPT_VERSION=0.4
+declare -gr SCRIPT_VERSION=0.5
 
 declare -gr BRANCH='dev'
 
