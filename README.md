@@ -15,8 +15,8 @@ Two type of attacks are supported at the moment:
 ## Features
 * Amplificate the wireless adapter/dongle power
 * MAC address spoofing
-* Rogue access-point aka honeypot
-* Evil-twin attack: 
+* Set-up rogue access-point aka honeypot
+* Further evil-twin attack: 
 	1. Clone an access-point
 	2. De-authenticate its users to force them to transparently auto-connect  
 	  to the evil-twin (spoofed) access-point
@@ -40,8 +40,7 @@ $ sudo ./wirespy.sh
 ## Project Information
 This script was developed in the context of my master thesis work in June 2015.
 
-The project was presented on Pentester Academy TV's toolbox in 2017:
-<https://www.youtube.com/watch?v=ALSChHZdf5o>
+The project was presented on [Pentester Academy TV's toolbox](https://www.youtube.com/watch?v=ALSChHZdf5o) in 2017Pentester Academy TV's toolbox in 2017.
 
 Work on a new improved version has commenced in 2018.
 
