@@ -104,7 +104,7 @@ function self_update() {
     git fetch
 
     if [[ $(git diff --name-only $BRANCH | grep ${0}) ]]; then
-        print_info "Found a new version, updating..."
+        print_info "A new release has been found, updating..."
         git checkout $BRANCH
         git pull origin $BRANCH
 
@@ -680,7 +680,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 
-self_update
 banner
+self_update
 check_compatibility
 menu
