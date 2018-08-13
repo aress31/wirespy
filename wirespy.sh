@@ -18,6 +18,8 @@
 
 SCRIPT_VERSION=0.4
 
+BRANCH='dev'
+
 BOLD='\e[1m'
 DIM='\e[2m'
 RESET_ALL='\e[0m'
@@ -80,6 +82,7 @@ trap quit INT
 #Tools vars
 declare -a required_packages=(
     'aircrack-ng'
+    'git'
     'grep'
     'macchanger'
     'procps'
@@ -95,6 +98,22 @@ function banner() {
     echo -e "${UNDERLINED}${DIM}Author: Alexandre Teyar | LinkedIn: linkedin.com/in/alexandre-teyar | GitHub: github.com/AresS31\n$RESET_ALL"
 }
 
+function self_update() {
+    print_info "Checking latest stable release"
+
+    git fetch
+
+    if [[ $(git diff --name-only $BRANCH | grep ${0}) ]]; then
+        print_info "Found a new version, updating..."
+        git checkout $BRANCH
+        git pull origin $BRANCH
+
+        print_info "$0 has been updated"
+        exit 1
+    else
+        print_info "You are running the latest stable version"
+    fi
+}
 
 function check_compatibility() {
     for package in "${required_packages[@]}"; do
@@ -661,6 +680,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 
+self_update
 banner
 check_compatibility
 menu
