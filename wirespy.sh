@@ -103,10 +103,8 @@ function check_update() {
     print_info 'Checking for an update...'
 
     if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]; then
-        git fetch
-
         if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]; then
-            print_info 'A new version is available, think of updating using the command: git clone https://github.com/AresS31/wirespy'
+            print_info 'A new version is available, consider updating using the command: git reset --hard && git pull origin $BRANCH --rebase'
         else
             print_info 'This is the latest stable version'
         fi
