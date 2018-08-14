@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 #    limitations under the License.
 
-# Improvement select interface using cursors rather than typing it
+# Possible improvement:
+# * select the interface using the cursors rather than typing the name
+# * for the show/hide DHCP lease may not be necessary to spwan another xterm
 
 declare -gr SCRIPT_VERSION=0.5
 
@@ -78,6 +80,7 @@ declare -a required_packages=(
     'grep'
     'macchanger'
     'procps'
+    'rfkill'
     'iproute2'
     'iw'
     'tcpdump'
@@ -89,7 +92,7 @@ trap quit INT
 print_question() { echo -e "${BG_GREEN}${FG_WHITE}${BOLD}wirespy$RESET_ALL » $1"; }
 print_error()    { echo -e "${BG_GREEN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > error$RESET_ALL » $1"; }
 print_info()     { echo -e "${BG_GREEN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > info$RESET_ALL » $1"; }
-print_intf()     { echo -e "${BG_GREEN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > interface$RESET_ALL » $1"; }
+print_intf()     { echo -e "${BG_GREEN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > intf$RESET_ALL » $1"; }
 print_warning()  { echo -e "${BG_GREEN}${FG_WHITE}${BOLD}wirespy${FG_BLACK} > warning$RESET_ALL » $1"; }
 
 
@@ -279,7 +282,7 @@ function configure_intfs() {
     print_question 'Select the wireless interface to use:'
 
     # prevent wlan adapter soft blocking
-    rfkill unblock wifi
+    rfkill unblock wifi 2> /dev/null
     display_wintf
 
     while [[ $res != 0 ]]; do
