@@ -239,7 +239,7 @@ function menu() {
             #         fi
             #     fi
             *)
-                print_warning "Unknown or invalid syntax $choice, type help for the help menu"
+                print_warning "Unknown or invalid syntax '$choice', type help for the help menu"
                 ;;
         esac
     done
