@@ -290,7 +290,7 @@ function configure_intfs() {
     if [[ $? = 0 ]]; then
         print_info "Monitor mode started"
     else
-        print_error "$WINTF could not enter monitor mode"
+        print_error "$WINTF could not enter monitor mode, inspect this issue manually"
         exit 1
     fi
     MINTF=$WINTF
@@ -561,13 +561,15 @@ function powerup() {
         res=$?
     done
 
-    print_wirespy "Enter the power boost (up to 30dBm) to apply to ${WINTF}:"
+    print_wirespy "Enter the power boost (up to to 4000) to apply to ${WINTF}:"
     read -p "$(echo -e $PROMPT_POWERUP) " boost
 
     print_info "$WINTF powering up..."
     # Bolivia allows high frequency power
-    ip link set "$WINTF" down && iw reg set BO && iw dev "$WINTF" set txpower fixed "$boost"mBm && ip link set "$WINTF" up
+    ip link set "$WINTF" down && iw reg set BO && iw dev "$WINTF" set txpower fixed "$boost" && ip link set "$WINTF" up
     sleep 4
+
+    iw dev "$WINTF" info
 }
 
 
@@ -594,7 +596,7 @@ function clean_up() {
             if [[ $? = 0 ]]; then
                 print_info "Managed mode started"
             else
-                print_error "$MINTF could not enter managed mode"
+                print_error "$MINTF could not enter managed mode, inspect this issue manually"
                 exit 1
             fi
             sleep 2
