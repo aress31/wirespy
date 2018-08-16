@@ -364,11 +364,11 @@ function honeypot() {
                 print_wirespy 'Enter a WEP password (value must be 10 hexadecimal characters):'
                 read -p "$(echo -e $PROMPT) " WEP 
                 
-                xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID -P -C 60 $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
+                xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID -P -C 60 $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
                 XTERM_AIRBASE_PID=$!
                 pass=true
             elif [[ $choice = 'n' || $choice = 'no' ]]; then
-                xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID -P $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
+                xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID -P $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
                 XTERM_AIRBASE_PID=$!
                 pass=true
             else
@@ -381,11 +381,11 @@ function honeypot() {
                 print_wirespy 'Enter a WEP password (value must be 10 hexadecimal characters):'
                 read -p "$(echo -e $PROMPT) " WEP 
 
-                xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
+                xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
                 XTERM_AIRBASE_PID=$!
                 pass=true
             elif [[ $choice = 'n' || $choice = 'no' ]]; then
-                xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
+                xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
                 XTERM_AIRBASE_PID=$!
                 pass=true
             else
@@ -440,7 +440,7 @@ function eviltwin() {
         esac
     done
 
-    xterm -fg green -title "Evil-twin - $eviltwin_ESSID" -e "airbase-ng -c $WCHAN -e $eviltwin_ESSID -P $MINTF | tee ./conf/tmp.txt 2> /dev/null" &
+    xterm -fg green -title "Evil-twin - $eviltwin_ESSID" -e "airbase-ng -c $WCHAN -e $eviltwin_ESSID -P $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
     XTERM_AIRBASE_PID=$!
     sleep 4     # crucial to let TINTF come up before setting it up
 
