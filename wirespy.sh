@@ -19,7 +19,6 @@
 # * add option set colors on/off
 
 declare -gr SCRIPT_VERSION=0.5
-
 declare -gr BRANCH='dev'
 
 BOLD='\e[1m'
@@ -42,20 +41,17 @@ BG_GREEN='\e[42m'
 BG_RED='\e[41m'
 BG_YELLOW='\e[43m'
 
-declare -g  PROMPT="${BG_GREEN}${FG_WHITE}wirespy$RESET_ALL »"
-declare -gr PROMPT_EVILTWIN_INFO="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > eviltwin$RESET_ALL »"
+declare -g  PROMPT_WIRESPY="${BG_GREEN}${FG_WHITE}wirespy$RESET_ALL »"
+declare -gr PROMPT_EVILTWIN="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > eviltwin$RESET_ALL »"
 declare -gr PROMPT_HONEYPOT="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > honeypot$RESET_ALL »"
 declare -gr PROMPT_POWERUP="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > powerup$RESET_ALL »"
 
 isAP=false
 isSniffing=false
 
-declare -i attack_type=0
-
 INTF=''
 MINTF=''
 TINTF=''
-WCHAN=''
 WINTF=''
 
 XTERM_AIRBASE_PID=''
@@ -64,17 +60,17 @@ TCPDUMP_PID=''
 
 declare -gr AIRBASE_ERROR='An error occurred with airbase-ng, no tap interface was created'
 declare -gr AP_PREREQUISITE='To use this option, first configure an access-point'
-declare -gr EVILTWIN_INFO='This attack consists of creating an evil copy of an access point and repeatedly sending deauth packets to its clients to force them to connect to our evil copy.
-Consequently, choose the same ESSID and wireless channel as the targeted access point.
-To properly perform this attack the attacker should first scan all the in-range access points to select a target. Next step is to copy the BSSID, ESSID and channel of the 
-selected target access point, to create its twin. 
-The final step is to deauthenticate all the clients from the target access point, so that the victims may connect to the evil twin.'
-declare -gr HONEYPOT='The Blackhole access point type will respond to all probe requests (the access point may receive a lot of requests in areas with high levels of WiFi activity such as crowded public places).
-The Bullzeye access point type will respond only to the probe requests specifying the access point ESSID.
-    1) Blackhole
-    2) Bullzeye'
-declare -gr INVALID_CHOICE='Invalid answer, type yes or no'
+declare -gr EVILTWIN_INFO="""
+This attack consists of creating an evil copy of an access point and repeatedly sending deauth packets \
+to its clients to force them to connect to our evil copy.
+Consequently, choose the same ESSID, BSSID and wireless channel as the targeted access point.
+To properly perform this attack the attacker should first scan all the in-range access points to select a \
+target. Next step is to copy the BSSID, ESSID and channel of the selected target access point, to create its twin. 
+The final step is to deauthenticate all the clients from the target access point, so that the victims may connect \
+to the evil twin.
+"""
 
+declare -a INTERFACES
 declare -a required_packages=(
     'aircrack-ng'
     'git'
@@ -88,14 +84,18 @@ declare -a required_packages=(
     'tcpdump'
     'xterm'
 )
+declare -a WINTERFACES
 
 trap quit INT
 
-print_wirespy() { echo -e "${BG_GREEN}${FG_WHITE}wirespy$RESET_ALL » $1"; }
-print_error()    { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > error$RESET_ALL » $1"; }
-print_info()     { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > info$RESET_ALL » $1"; }
-print_intf()     { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > intf$RESET_ALL » $1"; }
-print_warning()  { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > warning$RESET_ALL » $1"; }
+print_wirespy()     { echo -e "$PROMPT_WIRESPY $1"; }
+print_error()       { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > error$RESET_ALL » $1"; }
+print_info()        { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > info$RESET_ALL » $1"; }
+print_intf()        { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > intf$RESET_ALL » $1"; }
+print_warning()     { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > warning$RESET_ALL » $1"; }
+print_honeypot()    { echo -e "$PROMPT_HONEYPOT $1"; }
+print_eviltwin()    { echo -e "$PROMPT_EVILTWIN $1"; }
+print_powerup()     { echo -e "$PROMPT_POWERUP $1"; }
 
 
 function banner() {
@@ -105,13 +105,13 @@ function banner() {
 
 
 function check_update() {
-    print_info 'Checking for an update...'
+    print_wirespy 'Checking for an update...'
 
     if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]; then
         if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]; then
-            print_info 'A new version is available, consider updating using the command: git reset --hard && git pull origin $BRANCH --rebase'
+            print_wirespy 'A new version is available, consider updating using the command: git reset --hard && git pull origin $BRANCH --rebase'
         else
-            print_info 'This is the latest stable version'
+            print_wirespy 'This is the latest stable version'
         fi
     else
         print_warning "It is recommended to fetch $0 on GitHub using the command: git clone https://github.com/AresS31/wirespy"
@@ -120,7 +120,7 @@ function check_update() {
 
 
 function check_compatibility() {
-    print_info 'Checking for dependencies...'
+    print_wirespy 'Checking for dependencies...'
 
     for package in "${required_packages[@]}"; do
         if [[ $(dpkg -s $package 2> /dev/null) ]]; then
@@ -131,7 +131,7 @@ function check_compatibility() {
         fi
     done
 
-    print_info 'All the required packages are alread -p y installed'
+    print_wirespy 'All the required packages are already installed'
 }
 
 
@@ -152,7 +152,7 @@ ${FG_GREEN}quit$RESET_FG          : exit the script gracefully
 
 function menu() {
     while :; do
-        PROMPT=$PROMPT
+        PROMPT=$PROMPT_WIRESPY
         read -p  "$(echo -e $PROMPT) "
 
         case $REPLY in
@@ -167,7 +167,7 @@ function menu() {
                 ;;
             'run eviltwin')
                 clean_up &> /dev/null
-                PROMPT=$PROMPT_EVILTWIN_INFO
+                PROMPT=$PROMPT_EVILTWIN
                 configure_intfs
                 eviltwin
                 isAP=true
@@ -183,7 +183,7 @@ function menu() {
                 PROMPT=$PROMPT_POWERUP
                 powerup
                 ;;
-            'show leases')
+            'show lease'|'show leases')
                 if [[ $isAP = false ]]; then
                     print_warning "$AP_PREREQUISITE"
                 else
@@ -229,28 +229,28 @@ function menu() {
 
 
 function configure_intfs() {
-    local -i res=1
+    local PS3="$(echo -e $PROMPT) "
 
-    print_wirespy 'Select the internet-facing interface:'
-
-    display_intfs
-
-    while [[ $res != 0 ]]; do
-        read -p "$(echo -e $PROMPT) " INTF
-        check_intf "$INTF"
-        res=$?
+    print_wirespy 'Select the Internet-facing interface:'
+    get_intfs
+    select option in "${INTERFACES[@]}"
+    do
+        if [[ -n $option ]]; then
+            INTF=$(echo "$option" | awk -F': ' '{print $1}')
+            break
+        else
+            print_warning "Invalid option: $REPLY"
+        fi
     done
-    res=1
 
-    print_wirespy "Do you wish to randomise $INTF MAC address (can cause problems)?"
-
+    print_wirespy "Do you wish to randomise $INTF MAC address (this option can cause problems)?"
     while :; do
         read -p  "$(echo -e $PROMPT) " 
 
         case $REPLY in
             'y'|'ye'|'yes')
                 print_info "Randomising $INTF MAC address..."
-                ip link set "$INTF" down && macchanger -A "$INTF" 1> /dev/null && ip link set "$INTF" up
+                ip link set $INTF down && macchanger -A $INTF && ip link set $INTF up
                 print_warning 'In case of problems, RESTART networking (/etc/init.d/network restart), or use wicd (wicd-client)'
                 break
                 ;;
@@ -263,17 +263,19 @@ function configure_intfs() {
     done
 
     print_wirespy 'Select the wireless interface to use:'
+    get_wintfs
+    select option in "${WINTERFACES[@]}"
+    do
+        if [[ -n $option ]]; then
+            WINTF=$(echo "$option" | awk -F': ' '{print $1}')
 
-    display_wintfs
-
-    while [[ $res != 0 ]]; do
-        read -p "$(echo -e $PROMPT) " WINTF
-        check_intf "$WINTF"
-        res=$?
-
-        if [[ $WINTF = "$INTF" ]]; then
-            print_warning "$INTF is alread -p y in use, select another interface"
-            res=1
+            if [[ $WINTF = $INTF ]]; then
+                print_warning "$WINTF is already in use, select another interface"
+            else
+                break
+            fi
+        else
+            print_warning "Invalid option: $REPLY"
         fi
     done
 
@@ -283,9 +285,7 @@ function configure_intfs() {
     # put the wireless interface into "monitor" mode
     # add a check to ensure monitor mode has started or exit the script
     print_info "Starting monitor mode on $WINTF..."
-
-    # get return code
-    iw dev "$WINTF" set type monitor
+    iw dev $WINTF set type monitor
 
     if [[ $? = 0 ]]; then
         print_info "Monitor mode started"
@@ -297,15 +297,14 @@ function configure_intfs() {
     # crucial to let WINTF come up before macchanging
     sleep 2
 
-    print_wirespy "Do you wish to randomise $MINTF MAC address (recommended)?"
-
+    print_wirespy "Do you wish to randomise $MINTF MAC address (this option is recommended)?"
     while :; do
         read -p  "$(echo -e $PROMPT) " 
 
         case $REPLY in
             'y'|'ye'|'yes')
                 print_info "Randomising $MINTF MAC address..."
-                ip link set "$MINTF" down && macchanger -A "$MINTF" 1> /dev/null && ip link set "$MINTF" up
+                ip link set $MINTF down && macchanger -A $MINTF && ip link set $MINTF up
                 break
                 ;;
             'n'|'no')
@@ -319,23 +318,24 @@ function configure_intfs() {
 
 
 function honeypot() {
-    local -i attack_type=0
     local options=(
-        'Blackhole: The access point type will respond to all probe requests (the access point may receive a lot 
-of requests in areas with high levels of WiFi activity such as crowded public places)' 
+        "Blackhole: The access point type will respond to all probe requests (the access point may receive a lot \
+of requests in areas with high levels of WiFi activity such as crowded public places)." 
         'Bullzeye: The access point type will respond only to the probe requests specifying the access point ESSID.'
         )
     local PS3="$(echo -e $PROMPT) "
 
+
+    print_honeypot 'Select the type of honeypot you want to set up:'
     select option in "${options[@]}"
     do
         case $REPLY in
             1) 
-            attack_type=1
+            local -i attack_type=1
             break 
             ;;
             2) 
-            attack_type=2
+            local -i attack_type=2
             break 
             ;;
             *)
@@ -344,17 +344,16 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
         esac
     done
 
-    print_wirespy 'Access point ESSID?'
+    print_honeypot 'Enter the honeypot ESSID:'
     read -p "$(echo -e $PROMPT) " ESSID
 
-    print_wirespy 'Enter the wireless channel to use (value must be between 1 and 12):'
-
+    print_honeypot 'Enter the honeypot wireless channel (value must be between 1 and 12):'
     while :; do
         read -p  "$(echo -e $PROMPT) "
         
         case $REPLY in 
             [1-9]|1[0-2])
-                WCHAN=$REPLY
+                local -i WCHAN=$REPLY
                 break
                 ;;
             *) 
@@ -363,14 +362,13 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
         esac
     done
 
-    print_wirespy 'Configure WEP authentication for the access-point?'
-
-   while :; do
+    print_honeypot 'Do you want to enable WEP authentication?'
+    while :; do
         read -p  "$(echo -e $PROMPT) "
         
         case $REPLY in
             'y'|'ye'|'yes')
-                print_wirespy 'Enter a WEP password (value must be 10 hexadecimal characters):'
+                print_honeypot 'Enter a WEP password (the value must be 10 hexadecimal characters):'
                 read -p "$(echo -e $PROMPT) " WEP 
 
                 case $attack_type in
@@ -405,22 +403,18 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
                 ;;
         esac
     done
-
     sleep 4     # crucial, to let TINTF come up before setting it up  
 
     # extracting the tap interface
     TINTF=$(grep 'Created tap interface' ./conf/tmp.txt | awk '{print $5}')
-    check_intf "$TINTF"
-
-    if [[ $? != 0 ]]; then
+    if [[ $TINTF = '' ]]; then
         print_error "$AIRBASE_ERROR"
-        sleep 4
         quit
     fi
 
     enable_internet
     
-    print_info "$ESSID honeypot is now running..."
+    print_info "$ESSID - honeypot - is now running..."
     sleep 6
 }
 
@@ -428,20 +422,19 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
 function eviltwin() {
     echo "$EVILTWIN_INFO"
 
-    print_wirespy 'ESSID for the evil-twin?'
+    print_eviltwin 'Enter the evil-twin ESSID (the value must be identical to the legitimate access-point to spoof):'
     read -p "$(echo -e $PROMPT) " eviltwin_ESSID
 
-    print_wirespy 'BSSID for the evil-twin?'
+    print_eviltwin 'Enter the evil-twin BSSID (the value must be identical to the legitimate access-point to spoof):'
     read -p "$(echo -e $PROMPT) " eviltwin_BSSID
 
-    print_wirespy 'Enter the wireless channel to use (value must be identical to the legitimate access-point to spoof):'
-
+    print_eviltwin 'Enter the wireless channel to use (the value must be identical to the legitimate access-point to spoof):'
     while :; do
         read -p  "$(echo -e $PROMPT) "
         
         case $REPLY in 
             [1-9]|1[0-2])
-                WCHAN=$REPLY
+                local -i WCHAN=$REPLY
                 break
                 ;;
             *) 
@@ -456,9 +449,7 @@ function eviltwin() {
 
     # extracting the tap interface
     TINTF=$(grep 'Created tap interface' ./conf/tmp.txt | awk '{print $5}')
-    check_intf "$TINTF"
-
-    if [[ $? != 0 ]]; then
+    if [[ $TINTF = '' ]]; then
         print_error "$AIRBASE_ERROR"
         quit
     fi
@@ -470,33 +461,32 @@ function eviltwin() {
 
     enable_internet
     
-    print_info "$eviltwin_ESSID evil-twin is now running..."
+    print_info "$eviltwin_ESSID - evil-twin - is now running..."
     sleep 6
 }
 
 
 function powerup() {
-    local -i res=1
-    local -i BOOST=''
-    local WINTF=''
+    local PS3="$(echo -e $PROMPT) "
 
-    print_wirespy 'Select the wireless interface to boost-up:'
-
-    display_wintfs
-
-    while [[ ($res != 0) ]]; do
-        read -p "$(echo -e $PROMPT_POWERUP) " WINTF
-        check_intf "$WINTF"
-        res=$?
+    print_powerup 'Select the wireless interface to boost-up:'
+    get_wintfs
+    select option in "${WINTERFACES[@]}"
+    do
+        if [[ -n $option ]]; then
+            local WINTF=$(echo "$option" | awk -F': ' '{print $1}')
+            break
+        else
+            print_warning "Invalid option: $REPLY"
+        fi
     done
 
-    print_wirespy "Enter the power boost (up to to 4000) to apply to ${WINTF}:"
-
+    print_powerup "Enter the power boost (the value must be up to to 4000) to apply to ${WINTF}:"
     while :; do
         read -p  "$(echo -e $PROMPT_POWERUP) "
         
         if [[ $REPLY -ge 0 ]] && [[ $REPLY -le 4000 ]]; then
-            BOOST=$REPLY
+            local -i BOOST=$REPLY
             break
         else
             print_warning "Invalid value: $REPLY"
@@ -505,22 +495,53 @@ function powerup() {
 
     print_info "$WINTF powering up..."
     # Bolivia allows high power levels
-    ip link set "$WINTF" down && iw reg set BO && iw dev "$WINTF" set txpower fixed "$BOOST" && ip link set "$WINTF" up
+    ip link set $WINTF down && iw reg set BO && iw dev $WINTF set txpower fixed $BOOST && ip link set $WINTF up
     sleep 4
+    iw dev $WINTF info
+}
 
-    iw dev "$WINTF" info
+
+function get_intfs() {
+    intfs=$(ip -o link show | awk -F': ' '{print $2}' | grep -v 'lo')
+
+    if [[ $intfs ]]; then
+        for intf in $intfs; do # get the network interfaces names
+            IP=$(ip -o -f inet add show "$intf" | awk '{print $4}')
+            MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
+            INTERFACES+=("${intf}: $IP $MAC")
+        done
+    else
+        print_error 'No networking interface detected'
+        exit 1
+    fi
+}
+
+
+function get_wintfs() {
+    wintfs=$(ip -o link show | awk -F': ' '{print $2}' | grep 'wlan')
+
+    if [[ $wintfs ]]; then
+        for wintf in $wintfs; do # get the interfaces names
+            IP=$(ip -o -f inet add show "$wintf" | awk '{print $4}')
+            MAC=$(ip link show "$wintf" | awk '/ether/ {print $2}')
+            WINTERFACES+=("${wintf}: $IP $MAC")
+        done
+    else
+        print_error 'No wireless interface detected'
+        exit 1
+    fi
 }
 
 
 function enable_internet() {
     # configuring the newly created tap intrface
-    ip addr flush dev "$TINTF"
-    ip link set "$TINTF" down && ip addr add 10.0.0.254/24 dev "$TINTF" && ip link set "$TINTF" up
-    ip route flush dev "$TINTF"
-    ip route add 10.0.0.0/24 via 10.0.0.254 dev "$TINTF"
+    ip addr flush dev $TINTF
+    ip link set $TINTF down && ip addr add 10.0.0.254/24 dev $TINTF && ip link set $TINTF up
+    ip route flush dev $TINTF
+    ip route add 10.0.0.0/24 via 10.0.0.254 dev $TINTF
 
     print_info 'Enabling IP forwarding'
-    echo '1' > /proc/sys/net/ipv4/ip_forward
+    echo 1 > /proc/sys/net/ipv4/ip_forward
     # setting up ip address and route
 
     print_info 'Configuring NAT iptables...'
@@ -532,7 +553,7 @@ function enable_internet() {
     # iptables rules
     iptables -P FORWARD ACCEPT
     # forward the traffic via the internet facing interface
-    iptables -t nat -A POSTROUTING -o "$INTF" -j MASQUERADE
+    iptables -t nat -A POSTROUTING -o $INTF -j MASQUERADE
 
     # reset any pre-existing dhcp leases
     print_info 'Resetting pre-existing DHCP leases'
@@ -551,80 +572,34 @@ function enable_internet() {
 }
 
 
-function display_intfs() {
-    intfs=$(ip -o link show | awk -F': ' '{print $2}' | grep -v 'lo')
-
-    if [[ $intfs ]]; then
-        for intf in $intfs; do # get the network interfaces names
-            IP=$(ip -o -f inet add show "$intf" | awk '{print $4}')
-            MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
-            print_wirespy "${intf}: $IP $MAC"
-        done
-    else
-        print_error 'No networking interface detected'
-        exit 1
-    fi
-}
-
-
-# use the iw utility instead of the ip utility
-function display_wintfs() {
-    wintfs=$(ip -o link show | awk -F': ' '{print $2}' | grep 'wlan')
-
-    if [[ $wintfs ]]; then
-        for wintf in $wintfs; do # get the interfaces names
-            IP=$(ip -o -f inet add show "$wintf" | awk '{print $4}')
-            MAC=$(ip link show "$wintf" | awk '/ether/ {print $2}')
-            print_wirespy "${wintf}: $IP $MAC"
-        done
-    else
-        print_error 'No wireless interface detected'
-        exit 1
-    fi
-}
-
-
-function check_intf() {
-    if [[ $(ip link show "$1" 2> /dev/null) ]]; then
-        return 0
-    else
-        print_warning "Invalid interface: $1"
-        return 1
-    fi
-}
-
-
 function clean_up() {
     if [[ $isAP = true ]]; then
         print_info "Terminating active processes..."
         if [[ $XTERM_AIRBASE_PID ]]; then
-            kill -SIGKILL "$XTERM_AIRBASE_PID" 
+            kill -SIGKILL $XTERM_AIRBASE_PID 
         fi
         if [[ $XTERM_AIREPLAY_PID ]]; then
-            kill -SIGKILL "$XTERM_AIREPLAY_PID"
+            kill -SIGKILL $XTERM_AIREPLAY_PID
         fi
         sleep 2
     
         print_info "Removing temporary files"
         rm -f ./conf/tmp.txt
 
-        check_intf "$MINTF"
-
-        if [[ $? = 0 ]]; then
+        if [[ $MINTF != '' ]]; then
             print_info "Starting managed mode on $MINTF..." 
-            iw dev "$MINTF" set type managed
+            iw dev $MINTF set type managed
 
             if [[ $? = 0 ]]; then
                 print_info "Managed mode started"
             else
                 print_error "$MINTF could not enter managed mode, inspect this issue manually"
-                exit 1
             fi
             sleep 2
         fi
 
         print_info 'Disabling IP forwarding'
-        echo '0' > /proc/sys/net/ipv4/ip_forward
+        echo 0 > /proc/sys/net/ipv4/ip_forward
 
         print_info 'Flushing iptables'
         iptables --flush
@@ -641,7 +616,7 @@ function clean_up() {
     fi
     if [[ $isSniffing = true ]]; then
         print_info "Terminating TCPDump..."
-        kill -SIGKILL "$TCPDUMP_PID"
+        kill -SIGKILL $TCPDUMP_PID
         sleep 4
     fi
 }
