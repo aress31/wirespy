@@ -38,7 +38,7 @@ $ sudo ./wirespy.sh
 ```
 
 ## Possible Improvements
-- [ ] Add new features
+- [ ] Add new features such as bash autocompletion
 - [ ] Improve the UI
 - [ ] Source code optimisation
 
