@@ -38,7 +38,11 @@ $ sudo ./wirespy.sh
 ```
 
 ## Possible Improvements
-- [ ] Add new features such as bash autocompletion
+- [ ] Add new features such as:
+  - [ ] bash autocompletion
+  - [ ] validating all user inputs
+  - [ ] adding WPA/WPA2 for honeypot
+  - [ ] adding a status/info command showing the processes running in the background
 - [ ] Improve the UI
 - [ ] Source code optimisation
 
