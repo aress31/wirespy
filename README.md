@@ -1,50 +1,70 @@
-![wirespy](images/wirespy_logo.png)
-# Wirespy
-[![Language](https://img.shields.io/badge/Lang-Bash-blue.svg)](https://www.python.org)
-[![License](https://img.shields.io/badge/License-Apache%202.0-red.svg)](https://opensource.org/licenses/Apache-2.0)
+<p align="center">
+  <img alt="logo" src="https://raw.githubusercontent.com/AresS31/wirespy/dev/images/logo2.jpg" height="200">
+  <p align="center">
+      <a href="https://www.gnu.org/software/bash/"><img alt="language" src="https://img.shields.io/badge/Lang-Bash%204.2+-blue.svg"></a>
+      <a href="https://opensource.org/licenses/Apache-2.0"><img alt="license" src="https://img.shields.io/badge/License-Apache%202.0-red.svg"></a>
+      <img alt="version" src="https://img.shields.io/badge/Version-0.5-green.svg">
+      <img alt="bitcoin" src="https://img.shields.io/badge/Bitcoin-15aFaQaW9cxa4tRocax349JJ7RKyj7YV1p-yellow.svg">
+      <img alt="bitcoin cash" src="https://img.shields.io/badge/Bitcoin%20Cash-qqez5ed5wjpwq9znyuhd2hdg86nquqpjcgkm3t8mg3-yellow.svg">
+      <img alt="ether" src="https://img.shields.io/badge/Ether-0x70bC178EC44500C17B554E62BC31EA2B6251f64B-yellow.svg">
+  </p>
+</p>
 
-## Automate Man In The Middle Attacks (MITMAs) over WiFi.
-Wirespy allows attackers to set up quick honeypots to carry out MITMAs. Monitoring and logging functionalities are implemented in order to keep records of the victims traffics/activities. Other tools can be used together with Wirespy to further more advanced attacks. 
+## WireSpy enables the automation of various WiFi attacks to conduct Man-In-The-Middle-Attacks (MITMAs).
+**WireSpy** allows attackers to set up quick honeypots to carry out **MITMAs**. Monitoring and logging functionality is implemented in order to keep records of the victims' traffic/activities. Other tools can be used together with Wirespy to conduct more advanced attacks. 
 
 Two type of attacks are supported at the moment:
-* **Honeypot:** set up a simple rogue hotspot and wait for clients to connect.
-* **Evil-twin:** force victims to auto-connect to the honeyspot by spoofing a *"trusted"* hotspot.
+* **Honeypot**     : set up a simple rogue hotspot and wait for clients to connect
+* **Evil-twin**    : force victims to auto-connect to the honeyspot by spoofing a *"trusted"* hotspot
 
 ## Features
-* Power amplification.
-* MAC address spoofing.
-* Rogue access-point.
-* Evil-twin attack: 
-	* Clone an access-point. 
-	* De-authenticate its users to force them to transparently auto-connect  
-	  to the evil-twin (spoofed) access-point.
-* Monitoring the victims' traffics.
-* Logging the victims' traffics.
+* Amplificate the wireless adapter/dongle power
+* MAC address spoofing
+* Set-up rogue access-point aka honeypot
+* Further evil-twin attack: 
+    1. Clone an access-point
+    2. De-authenticate its users to force them to transparently auto-connect  
+      to the evil-twin (spoofed) access-point
+* Capture the victims' traffic
 
 ## Usage
 1. Make the script executable:
-```
+```console
 $ chmod +x wirespy.sh
 ```
-
-2. Run the script as root:
-```
+2. Run the script with root privileges:
+```console
 $ sudo ./wirespy.sh
 ```
+3. Type `help` to display the list of available commands
 
-## Dependencies
-Works out of the box using Kali Linux.
-
-## Future Improvements
-- [ ] Add new features.
-- [ ] Debugging.
-- [ ] Source code optimisations.
+## Possible Improvements
+- [ ] Add new features such as:
+  - [ ] Bash autocompletion
+  - [ ] Validate all user inputs against regexes
+  - [ ] Add WPA/WPA2 support for honeypot
+  - [x] Add a command to show the status of the running commands in the background
+- [ ] Improve the stability
+- [ ] Improve the UI (e.g. uniformise the style)
+- [ ] Source code optimisation
 
 ## Project Information
 This script was developed in the context of my master thesis work in June 2015.
 
+The project was presented on Pentester Academy TV's toolbox in 2017:
+
+[![Pentester Academy TV's toolbox](https://img.youtube.com/vi/ALSChHZdf5o/0.jpg)](https://www.youtube.com/watch?v=ALSChHZdf5o)
+
+Work on a new improved version has commenced in 2018.
+
+## Donation
+If you want to support my work doing a donation, it will be very much appreciated:
+* Bitcoin       : **15aFaQaW9cxa4tRocax349JJ7RKyj7YV1p**
+* Bitcoin Cash  : **qqez5ed5wjpwq9znyuhd2hdg86nquqpjcgkm3t8mg3**
+* Ether         : **0x70bC178EC44500C17B554E62BC31EA2B6251f64B**
+
 ## License
-   Copyright (C) 2015 Alexandre Teyar
+   Copyright (C) 2015 - 2018 Alexandre Teyar
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
