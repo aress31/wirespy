@@ -517,6 +517,8 @@ function get_intfs() {
     intfs=$(ip -o link show | awk -F': ' '{print $2}' | grep -v 'lo')
 
     if [[ $intfs ]]; then
+        INTERFACES=()
+
         for intf in $intfs; do # get the network interfaces names
             IP=$(ip -o -f inet add show "$intf" | awk '{print $4}')
             MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
@@ -533,6 +535,8 @@ function get_wintfs() {
     wintfs=$(ip -o link show | awk -F': ' '{print $2}' | grep 'wlan')
 
     if [[ $wintfs ]]; then
+        WINTERFACES=()
+
         for wintf in $wintfs; do # get the interfaces names
             IP=$(ip -o -f inet add show "$wintf" | awk '{print $4}')
             MAC=$(ip link show "$wintf" | awk '/ether/ {print $2}')
