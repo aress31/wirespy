@@ -46,7 +46,8 @@ declare -gr PROMPT_EVILTWIN="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > eviltwin$R
 declare -gr PROMPT_HONEYPOT="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > honeypot$RESET_ALL »"
 declare -gr PROMPT_POWERUP="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > powerup$RESET_ALL »"
 
-isAP=false
+isHonneypot=false
+isEviltwin=false
 isSniffing=false
 
 INTF=''
@@ -59,16 +60,14 @@ AIRODUMP_PID=''
 TCPDUMP_PID=''
 
 declare -gr AIRBASE_ERROR='An error occurred with airbase-ng, no tap interface was created'
-declare -gr AP_PREREQUISITE='To use this option, first configure an access-point'
-declare -gr EVILTWIN_INFO="""
-This attack consists of creating an evil copy of an access point and repeatedly sending deauth packets \
+declare -gr AP_PREREQUISITE='To use this option, first configure a honeypot or an eviltwin'
+declare -gr EVILTWIN_INFO="""This attack consists of creating an evil copy of an access point and repeatedly sending deauth packets \
 to its clients to force them to connect to our evil copy.
 Consequently, choose the same ESSID, BSSID and wireless channel as the targeted access point.
 To properly perform this attack the attacker should first scan all the in-range access points to select a \
 target. Next step is to copy the BSSID, ESSID and channel of the selected target access point, to create its twin. 
 The final step is to deauthenticate all the clients from the target access point, so that the victims may connect \
-to the evil twin.
-"""
+to the evil twin."""
 
 declare -a INTERFACES
 declare -a required_packages=(
@@ -92,6 +91,7 @@ print_wirespy()     { echo -e "$PROMPT_WIRESPY $1"; }
 print_error()       { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > error$RESET_ALL » $1"; }
 print_info()        { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > info$RESET_ALL » $1"; }
 print_intf()        { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > intf$RESET_ALL » $1"; }
+print_active()      { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > active$RESET_ALL » $1"; }
 print_warning()     { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > warning$RESET_ALL » $1"; }
 print_honeypot()    { echo -e "$PROMPT_HONEYPOT $1"; }
 print_eviltwin()    { echo -e "$PROMPT_EVILTWIN $1"; }
@@ -136,17 +136,16 @@ function check_compatibility() {
 
 
 function help {
-    echo -e """
-${FG_GREEN}run eviltwin$RESET_FG  : launch an evil-twin attack
+    echo -e """${FG_GREEN}run eviltwin$RESET_FG  : launch an evil-twin attack
 ${FG_GREEN}run honeypot$RESET_FG  : launch a rogue access point
 ${FG_GREEN}run powerup$RESET_FG   : run powerup wireless interface
 ${FG_GREEN}show leases$RESET_FG   : display the DHCP leases
 ${FG_GREEN}start capture$RESET_FG : start packet capture
 ${FG_GREEN}stop capture$RESET_FG  : stop packet capture
+${FG_GREEN}active$RESET_FG        : show information about active modules
 ${FG_GREEN}clear$RESET_FG         : clear the screen
 ${FG_GREEN}help$RESET_FG          : list available commands
-${FG_GREEN}quit$RESET_FG          : exit the script gracefully
-"""
+${FG_GREEN}quit$RESET_FG          : exit the script gracefully"""
 }
 
 
@@ -156,8 +155,19 @@ function menu() {
         read -p  "$(echo -e $PROMPT) "
 
         case $REPLY in
+            'active')
+                if [[ $isHonneypot = true ]]; then
+                    print_active "honeypot is running..."
+                fi
+                if [[ $isEviltwin = true ]]; then
+                    print_active "eviltwin is running..."
+                fi
+                if [[ $isSniffing = true ]]; then
+                    print_active "packet capture is running..."
+                fi
+                ;;
             'clear')
-                reset
+                clear
                 ;;
             'quit')
                 quit
@@ -170,21 +180,21 @@ function menu() {
                 PROMPT=$PROMPT_EVILTWIN
                 configure_intfs
                 eviltwin
-                isAP=true
+                isEviltwin=true
                 ;;
             'run honeypot')
                 clean_up &> /dev/null
                 PROMPT=$PROMPT_HONEYPOT
                 configure_intfs
                 honeypot
-                isAP=true
+                isHonneypot=true
                 ;;
             'run powerup')
                 PROMPT=$PROMPT_POWERUP
                 powerup
                 ;;
             'show lease'|'show leases')
-                if [[ $isAP = false ]]; then
+                if [[ $isHonneypot = false && $isEviltwin = false ]]; then
                     print_warning "$AP_PREREQUISITE"
                 else
                     if [[ $(cat /var/run/dhcpd.pid) ]]; then
@@ -195,7 +205,7 @@ function menu() {
                 fi
                 ;;
             'start capture')
-                if [[ $isAP = false ]]; then
+                if [[ $isHonneypot = false && $isEviltwin = false ]]; then
                     print_warning "$AP_PREREQUISITE"
                 else
                     if [[ $isSniffing = false ]]; then
@@ -203,12 +213,12 @@ function menu() {
                         TCPDUMP_PID=$(tcpdump -i $TINTF -w ./logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap &> /dev/null & echo $!)
                         isSniffing=true
                     else
-                        print_warning 'The traffic is alread -p y being captured'
+                        print_warning 'The traffic is already being captured'
                     fi
                 fi
                 ;;
             'stop capture')
-                if [[ $isAP = false ]]; then
+                if [[ $isHonneypot = false && $isEviltwin = false ]]; then
                     print_warning "$AP_PREREQUISITE"
                 else
                     if [[ $isSniffing = true ]]; then
@@ -221,7 +231,7 @@ function menu() {
                 fi
                 ;;
             *)
-                print_warning "Invalid command: $REPLY - type help for the list of available commands"
+                print_warning "Invalid command: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL - type ${BOLD}help$RESET_ALL for the list of available commands"
                 ;;
         esac
     done
@@ -239,7 +249,7 @@ function configure_intfs() {
             INTF=$(echo "$option" | awk -F': ' '{print $1}')
             break
         else
-            print_warning "Invalid option: $REPLY"
+            print_warning "Invalid option: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
         fi
     done
 
@@ -258,7 +268,7 @@ function configure_intfs() {
                 break
                 ;;
             *)
-                print_warning "Invalid choice: $REPLY"
+                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
         esac
     done
 
@@ -275,7 +285,7 @@ function configure_intfs() {
                 break
             fi
         else
-            print_warning "Invalid option: $REPLY"
+            print_warning "Invalid option: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
         fi
     done
 
@@ -286,6 +296,7 @@ function configure_intfs() {
     # add a check to ensure monitor mode has started or exit the script
     print_info "Starting monitor mode on $WINTF..."
     iw dev $WINTF set type monitor
+    sleep 2     # crucial to let WINTF come up before macchanging
 
     if [[ $? = 0 ]]; then
         print_info "Monitor mode started"
@@ -294,8 +305,6 @@ function configure_intfs() {
         exit 1
     fi
     MINTF=$WINTF
-    # crucial to let WINTF come up before macchanging
-    sleep 2
 
     print_wirespy "Do you wish to randomise $MINTF MAC address (this option is recommended)?"
     while :; do
@@ -311,9 +320,12 @@ function configure_intfs() {
                 break
                 ;;
             *)
-                print_warning "Invalid choice: $REPLY"
+                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
         esac
     done
+
+    print_info "Killing processes that may interfere with the honeypot || evil-twin..."
+    airmon-ng check kill > /dev/null
 }
 
 
@@ -339,7 +351,7 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
             break 
             ;;
             *)
-            print_warning "Invalid option: $REPLY"
+            print_warning "Invalid option: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
             ;;
         esac
     done
@@ -357,7 +369,7 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
                 break
                 ;;
             *) 
-                print_warning "Invalid channel: $REPLY"
+                print_warning "Invalid channel: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
                 ;;
         esac
     done
@@ -399,7 +411,7 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
                 esac
                 ;;
             *)
-                print_warning "Invalid choice: $REPLY"
+                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
                 ;;
         esac
     done
@@ -414,7 +426,7 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
 
     enable_internet
     
-    print_info "$ESSID - honeypot - is now running..."
+    print_info "The honeypot ${BOLD}${ESSID}$RESET_ALL is now running..."
     sleep 6
 }
 
@@ -438,7 +450,7 @@ function eviltwin() {
                 break
                 ;;
             *) 
-                print_warning "Invalid channel: $REPLY"
+                print_warning "Invalid channel: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
                 ;;
         esac
     done
@@ -461,7 +473,7 @@ function eviltwin() {
 
     enable_internet
     
-    print_info "$eviltwin_ESSID - evil-twin - is now running..."
+    print_info "The eviltwin ${BOLD}${eviltwin_ESSID}$RESET_ALL is now running..."
     sleep 6
 }
 
@@ -477,7 +489,7 @@ function powerup() {
             local WINTF=$(echo "$option" | awk -F': ' '{print $1}')
             break
         else
-            print_warning "Invalid option: $REPLY"
+            print_warning "Invalid option: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
         fi
     done
 
@@ -489,7 +501,7 @@ function powerup() {
             local -i BOOST=$REPLY
             break
         else
-            print_warning "Invalid value: $REPLY"
+            print_warning "Invalid value: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
         fi
     done
 
@@ -573,7 +585,7 @@ function enable_internet() {
 
 
 function clean_up() {
-    if [[ $isAP = true ]]; then
+    if [[ $isHonneypot = true || $isEviltwin = true ]]; then
         print_info "Terminating active processes..."
         if [[ $XTERM_AIRBASE_PID ]]; then
             kill -SIGKILL $XTERM_AIRBASE_PID 
@@ -585,18 +597,6 @@ function clean_up() {
     
         print_info "Removing temporary files"
         rm -f ./conf/tmp.txt
-
-        if [[ $MINTF != '' ]]; then
-            print_info "Starting managed mode on $MINTF..." 
-            iw dev $MINTF set type managed
-
-            if [[ $? = 0 ]]; then
-                print_info "Managed mode started"
-            else
-                print_error "$MINTF could not enter managed mode, inspect this issue manually"
-            fi
-            sleep 2
-        fi
 
         print_info 'Disabling IP forwarding'
         echo 0 > /proc/sys/net/ipv4/ip_forward
@@ -613,6 +613,17 @@ function clean_up() {
 
         print_info 'Stopping DHCP server...'
         /etc/init.d/isc-dhcp-server stop
+    fi
+    if [[ $MINTF != '' ]]; then
+        print_info "Starting managed mode on $MINTF..." 
+        iw dev $MINTF set type managed
+        sleep 2
+
+        if [[ $? = 0 ]]; then
+            print_info "Managed mode started"
+        else
+            print_error "$MINTF could not enter managed mode, inspect this issue manually"
+        fi
     fi
     if [[ $isSniffing = true ]]; then
         print_info "Terminating TCPDump..."

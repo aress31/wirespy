@@ -36,14 +36,16 @@ $ chmod +x wirespy.sh
 ```console
 $ sudo ./wirespy.sh
 ```
+3. Type `help` to display the list of available commands
 
 ## Possible Improvements
 - [ ] Add new features such as:
-  - [ ] bash autocompletion
-  - [ ] validating all user inputs
-  - [ ] adding WPA/WPA2 for honeypot
-  - [ ] adding a status/info command showing the processes running in the background
-- [ ] Improve the UI
+  - [ ] Bash autocompletion
+  - [ ] Validate all user inputs against regexes
+  - [ ] Add WPA/WPA2 support for honeypot
+  - [x] Add a command to show the status of the running commands in the background
+- [ ] Improve the stability
+- [ ] Improve the UI (e.g. uniformise the style)
 - [ ] Source code optimisation
 
 ## Project Information
