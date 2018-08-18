@@ -19,7 +19,7 @@
 # * add option set colors on/off
 
 declare -gr SCRIPT_VERSION=0.5
-declare -gr BRANCH='dev'
+declare -gr BRANCH='master'
 
 BOLD='\e[1m'
 DIM='\e[2m'
