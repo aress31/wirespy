@@ -46,9 +46,9 @@ declare -gr PROMPT_EVILTWIN="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > eviltwin$R
 declare -gr PROMPT_HONEYPOT="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > honeypot$RESET_ALL »"
 declare -gr PROMPT_POWERUP="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > powerup$RESET_ALL »"
 
-isHonneypot=false
-isEviltwin=false
-isSniffing=false
+isHonneypot=0
+isEviltwin=0
+isSniffing=0
 
 INTF=''
 MINTF=''
@@ -156,13 +156,13 @@ function menu() {
 
         case $REPLY in
             'active')
-                if [[ $isHonneypot = true ]]; then
+                if [[ $isHonneypot = 1 ]]; then
                     print_active "honeypot is running..."
                 fi
-                if [[ $isEviltwin = true ]]; then
+                if [[ $isEviltwin = 1 ]]; then
                     print_active "eviltwin is running..."
                 fi
-                if [[ $isSniffing = true ]]; then
+                if [[ $isSniffing = 1 ]]; then
                     print_active "packet capture is running..."
                 fi
                 ;;
@@ -176,25 +176,74 @@ function menu() {
                 help
                 ;;
             'run eviltwin')
-                clean_up &> /dev/null
                 PROMPT=$PROMPT_EVILTWIN
-                configure_intfs
-                eviltwin
-                isEviltwin=true
+
+                if [[ $isHoneypot = 1 || $isEviltwin = 1 ]]; then
+                    print_warning "An access-point (honeypot || evil-twin) is currently running. Do you wish to stop it to start an evil-twin attack?"
+                    while :; do
+                        read -p  "$(echo -e $PROMPT) " 
+
+                        case $REPLY in
+                            'y'|'ye'|'yes')
+                                print_info "Stopping the running attack..."
+                                clean_up &> /dev/null
+                                configure_intfs
+                                eviltwin
+                                isHonneypot=0
+                                isEviltwin=1
+                                break
+                                ;;
+                            'n'|'no')
+                                break
+                                ;;
+                            *)
+                                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+                        esac
+                    done
+                else
+                    configure_intfs
+                    eviltwin
+                    isEviltwin=1
+                fi
                 ;;
             'run honeypot')
-                clean_up &> /dev/null
                 PROMPT=$PROMPT_HONEYPOT
-                configure_intfs
-                honeypot
-                isHonneypot=true
+
+                if [[ $isHoneypot -eq 1 || $isEviltwin -eq 1 ]]; then
+                    print_warning "An access-point (honeypot || evil-twin) is currently running. Do you wish to stop it to start an evil-twin attack?"
+                    while :; do
+                        read -p  "$(echo -e $PROMPT) " 
+
+                        case $REPLY in
+                            'y'|'ye'|'yes')
+                                print_info "Stopping the running attack..."
+                                clean_up &> /dev/null
+                                configure_intfs
+                                honeypot
+                                isHonneypot=1
+                                isEviltwin=0
+                                break
+                                ;;
+                            'n'|'no')
+                                break
+                                ;;
+                            *)
+                                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+                        esac
+                    done
+                else
+                    echo "yo honey $isHonneypot evil $isEviltwin"
+                    configure_intfs
+                    honeypot
+                    isHonneypot=1
+                fi
                 ;;
             'run powerup')
                 PROMPT=$PROMPT_POWERUP
                 powerup
                 ;;
             'show lease'|'show leases')
-                if [[ $isHonneypot = false && $isEviltwin = false ]]; then
+                if [[ $isHonneypot = 0 && $isEviltwin = 0 ]]; then
                     print_warning "$AP_PREREQUISITE"
                 else
                     if [[ $(cat /var/run/dhcpd.pid) ]]; then
@@ -205,26 +254,26 @@ function menu() {
                 fi
                 ;;
             'start capture')
-                if [[ $isHonneypot = false && $isEviltwin = false ]]; then
+                if [[ $isHonneypot = 0 && $isEviltwin = 0 ]]; then
                     print_warning "$AP_PREREQUISITE"
                 else
-                    if [[ $isSniffing = false ]]; then
+                    if [[ $isSniffing = 0 ]]; then
                         print_info "Packet capture started, the resulting file will be ./logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap"
                         TCPDUMP_PID=$(tcpdump -i $TINTF -w ./logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap &> /dev/null & echo $!)
-                        isSniffing=true
+                        isSniffing=1
                     else
                         print_warning 'The traffic is already being captured'
                     fi
                 fi
                 ;;
             'stop capture')
-                if [[ $isHonneypot = false && $isEviltwin = false ]]; then
+                if [[ $isHonneypot = 0 && $isEviltwin = 0 ]]; then
                     print_warning "$AP_PREREQUISITE"
                 else
-                    if [[ $isSniffing = true ]]; then
+                    if [[ $isSniffing = 1 ]]; then
                         print_info "Packet capture stopped"
                         kill -SIGKILL "$TCPDUMP_PID"
-                        isSniffing=false
+                        isSniffing=0
                     else
                         print_warning 'No packet capture has been launched'
                     fi
@@ -325,7 +374,7 @@ function configure_intfs() {
     done
 
     print_info "Killing processes that may interfere with the honeypot || evil-twin..."
-    airmon-ng check kill > /dev/null
+    airmon-ng check kill
 }
 
 
@@ -517,6 +566,8 @@ function get_intfs() {
     intfs=$(ip -o link show | awk -F': ' '{print $2}' | grep -v 'lo')
 
     if [[ $intfs ]]; then
+        INTERFACES=()
+
         for intf in $intfs; do # get the network interfaces names
             IP=$(ip -o -f inet add show "$intf" | awk '{print $4}')
             MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
@@ -533,6 +584,8 @@ function get_wintfs() {
     wintfs=$(ip -o link show | awk -F': ' '{print $2}' | grep 'wlan')
 
     if [[ $wintfs ]]; then
+        WINTERFACES=()
+
         for wintf in $wintfs; do # get the interfaces names
             IP=$(ip -o -f inet add show "$wintf" | awk '{print $4}')
             MAC=$(ip link show "$wintf" | awk '/ether/ {print $2}')
@@ -585,7 +638,7 @@ function enable_internet() {
 
 
 function clean_up() {
-    if [[ $isHonneypot = true || $isEviltwin = true ]]; then
+    if [[ $isHonneypot = 1 || $isEviltwin = 1 ]]; then
         print_info "Terminating active processes..."
         if [[ $XTERM_AIRBASE_PID ]]; then
             kill -SIGKILL $XTERM_AIRBASE_PID 
@@ -625,7 +678,7 @@ function clean_up() {
             print_error "$MINTF could not enter managed mode, inspect this issue manually"
         fi
     fi
-    if [[ $isSniffing = true ]]; then
+    if [[ $isSniffing = 1 ]]; then
         print_info "Terminating TCPDump..."
         kill -SIGKILL $TCPDUMP_PID
         sleep 4
