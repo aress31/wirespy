@@ -1,0 +1,26 @@
+13:43:11  Created tap interface at0
+13:43:11  Trying to set MTU on at0 to 1500
+13:43:11  Trying to set MTU on wlan0 to 1800
+error setting MTU on wlan0
+13:43:11  MTU on wlan0 remains at 1500
+13:43:11  Access Point with BSSID 00:C0:CA:96:4A:4A started.
+13:43:15  Got directed probe request from EC:9B:F3:FB:EF:88 - "VM383162-2G"
+13:43:32  Got broadcast probe request from BA:72:94:52:96:D6
+13:43:34  Got broadcast probe request from 76:E5:5E:D2:AB:DC
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:34  Got broadcast probe request from 04:4F:4C:8B:C5:1A
+13:43:43  Got directed probe request from 4C:57:CA:4A:27:CF - "EE-BrightBox-tjkmx6"
+13:43:43  Got directed probe request from 4C:57:CA:4A:27:CF - "EE-BrightBox-tjkmx6"
+13:43:43  Got directed probe request from 4C:57:CA:4A:27:CF - "EE-BrightBox-tjkmx6"
+13:43:45  Got broadcast probe request from 26:35:03:4B:1E:C3
+13:43:47  Got broadcast probe request from 14:1A:A3:11:11:8E
+13:44:00  Got broadcast probe request from 84:63:D6:5F:60:78
+13:44:01  Got broadcast probe request from 84:63:D6:5F:60:78

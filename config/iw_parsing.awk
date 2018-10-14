@@ -1,7 +1,7 @@
 BEGIN {
     regex_BSS = "^[[:alnum:]:]{17}$"
     regex_channel = "DS Parameter set: channel" # improve this regex
-    printf("%-18.18s %-16.16s %8.8s %12.12s %12.12s %12.12s %6.6s %6.6s %6.6s %6.6s %6.6s\n\n", "BSSID", "SSID", "Channel", "Frequency", "Signal (dBm)", "Signal (%)", "WPS", "WPA", "WPA2", "WEP", "TKIP", "CCMP")
+    printf("%-18.18s %-16.16s %8.8s %12.12s %12.12s %12.12s %6.6s %6.6s %6.6s %6.6s %6.6s\n", "BSSID", "SSID", "Channel", "Frequency", "Signal (dBm)", "Signal (%)", "WPS", "WPA", "WPA2", "WEP", "TKIP", "CCMP")
 }
 
 NF > 0 {
@@ -61,6 +61,6 @@ NF > 0 {
 
 END {
     for (BSSID in dict) {
-        printf("%-18.18s %-16.16s %8.8s %12.12s %12.12s %12.12s %6.6s %6.6s %6.6s %6.6s %6.6s\n\n", BSSID, dict[BSSID]["SSID"], dict[BSSID]["channel"], dict[BSSID]["freq"], dict[BSSID]["signal"], dict[BSSID]["signal%"], dict[BSSID]["WPS"], dict[BSSID]["WPA"], dict[BSSID]["WPA2"], dict[BSSID]["WEP"], dict[BSSID]["TKIP"], dict[BSSID]["CCMP"])
+        printf("%-18.18s %-16.16s %8.8s %12.12s %12.12s %12.12s %6.6s %6.6s %6.6s %6.6s %6.6s\n", BSSID, dict[BSSID]["SSID"], dict[BSSID]["channel"], dict[BSSID]["freq"], dict[BSSID]["signal"], dict[BSSID]["signal%"], dict[BSSID]["WPS"], dict[BSSID]["WPA"], dict[BSSID]["WPA2"], dict[BSSID]["WEP"], dict[BSSID]["TKIP"], dict[BSSID]["CCMP"])
     }
 }
