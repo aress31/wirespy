@@ -14,18 +14,15 @@
 **WireSpy** allows attackers to set up quick honeypots to carry out **MITMAs**. Monitoring and logging functionality is implemented in order to keep records of the victims' traffic/activities. Other tools can be used together with Wirespy to conduct more advanced attacks. 
 
 Two type of attacks are supported at the moment:
-* **Honeypot**     : set up a simple rogue hotspot and wait for clients to connect
-* **Evil-twin**    : force victims to auto-connect to the honeyspot by spoofing a *"trusted"* hotspot
+* **Honeypot**: Set up a simple rogue hotspot and wait for clients to connect.
+* **Eviltwin**: Force victims to auto-connect to the honeypot by spoofing a *"trusted"* hotspot (clone an existing access point and de-authenticate its users to force them to transparently connect to the spoofed honeypot).
 
 ## Features
-* Amplificate the wireless adapter/dongle power
+* Capture victims' traffic
 * MAC address spoofing
-* Set-up rogue access-point aka honeypot
-* Further evil-twin attack: 
-    1. Clone an access-point
-    2. De-authenticate its users to force them to transparently auto-connect  
-      to the evil-twin (spoofed) access-point
-* Capture the victims' traffic
+* Set-up honeypot and eviltwin attacks
+* Show the list of in range access point and their details 
+* Wireless adapter|card|dongle power amplification
 
 ## Usage
 1. Make the script executable:
@@ -36,17 +33,34 @@ $ chmod +x wirespy.sh
 ```console
 $ sudo ./wirespy.sh
 ```
-3. Type `help` to display the list of available commands
+3. Type `help` to display the list of available commands.
+
+## Available commands
+```shell
+Attacks:
+    eviltwin      > launch an evil-twin attack
+    honeypot      > launch a rogue access point attack
+
+Commands:
+    clear         > clear the terminal
+    help          > list available commands
+    quit|exit     > exit the program
+    apscan        > show all wireless access points nearby
+    leases        > display DHCP leases
+    powerup       > power wireless interface up (may cause issues)
+    start capture > start packet capture (tcpdump)
+    stop capture  > stop packet capture (tcpdump)
+    status        > show modules status
+```
 
 ## Possible Improvements
-- [ ] Add new features such as:
-  - [ ] Bash autocompletion
-  - [ ] Validate all user inputs against regexes
-  - [ ] Add WPA/WPA2 support for honeypot
-  - [x] Add a command to show the status of the running commands in the background
-- [ ] Improve the stability
-- [ ] Improve the UI (e.g. uniformise the style)
-- [ ] Source code optimisation
+- [x] Add a command to show the status of the running commands in the background
+- [ ] Add WPA/WPA2 support for honeypot
+- [ ] Bash autocompletion
+- [x] Improve the stability
+- [x] Improve the UI (e.g. uniformise the style)
+- [x] Source code optimisation
+- [ ] Validate all user inputs against regexes
 
 ## Project Information
 This script was developed in the context of my master thesis work in June 2015.
