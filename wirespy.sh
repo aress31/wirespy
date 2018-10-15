@@ -516,6 +516,11 @@ function attackPrerequisites() {
     airmon-ng check kill | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/ /g' # remove newlines
 
     sleep 4
+
+    if ! [[ -d "${PROGDIR}/temp" ]]
+    then
+        mkdir "${PROGDIR}/temp"
+    fi
 }
 
 function enableInternetAccess() {
@@ -748,6 +753,11 @@ function displayDHCPleases() {
 function startCapture() {
     if (( $PID_TCPDUMP == 0 ))
     then
+        if ! [[ -d "${PROGDIR}/logs" ]]
+        then
+            mkdir "${PROGDIR}/logs"
+        fi
+
         print_info "Packet capture started, the resulting file will be ${PROGDIR}/logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap"
         # we want to keep the stderr in case of problem
         PID_TCPDUMP=$(tcpdump -i $TINTF -w ${PROGDIR}/logs/capture_$(/bin/date +"%Y%m%d-%H%M%S").pcap &> /dev/null & echo $!)
@@ -842,7 +852,7 @@ function cleanUp() {
         sleep 2
     
         print_info 'Removing temporary files...'
-        rm -rf "${PROGDIR}/temp/*"
+        rm -rf "${PROGDIR}/temp"
 
         print_info 'Disabling IP forwarding...'
         echo 0 > /proc/sys/net/ipv4/ip_forward
