@@ -15,8 +15,10 @@
 #    limitations under the License.
 
 # TODO:
-# * Implement nice coloring
 # * Fix channel restrictions (WCHAN)
+# * Implement a stop running attack feature
+# * Implement an eval function - everything after ! would be executed as a system command
+# * Implement output coloring
 # * Make the 'quit' option clearer by changing its name with back or menu whenever needed
 
 # enable stricter programming rules (turns some bugs into errors)
