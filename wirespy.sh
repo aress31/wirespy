@@ -152,7 +152,7 @@ function usage {
 cat <<- USAGE
 
 Attacks:
-    eviltwin      > launch an eviltwin attack
+    eviltwin      > launch an evil twin attack
     honeypot      > launch a rogue access point attack
 
 Commands:

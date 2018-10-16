@@ -35,10 +35,10 @@ $ sudo ./wirespy.sh
 ```
 3. Type `help` to display the list of available commands.
 
-## Available commands
+### Available commands
 ```shell
 Attacks:
-    eviltwin      > launch an eviltwin attack
+    eviltwin      > launch an evil twin attack
     honeypot      > launch a rogue access point attack
 
 Commands:
