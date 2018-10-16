@@ -14,8 +14,8 @@
 **WireSpy** allows attackers to set up quick honeypots to carry out **MITMAs**. Monitoring and logging functionality is implemented in order to keep records of the victims' traffic/activities. Other tools can be used together with Wirespy to conduct more advanced attacks. 
 
 Two type of attacks are supported at the moment:
-* **Honeypot**: Set up a simple rogue hotspot and wait for clients to connect.
 * **Evil twin**: Force victims to auto-connect to the honeypot by spoofing a *"trusted"* hotspot (clone an existing access point and de-authenticate its users to force them to transparently connect to the spoofed honeypot).
+* **Honeypot**: Set up a simple rogue hotspot and wait for clients to connect.
 
 ## Features
 * Capture victims' traffic
@@ -38,7 +38,7 @@ $ sudo ./wirespy.sh
 ## Available commands
 ```shell
 Attacks:
-    eviltwin      > launch an evil-twin attack
+    eviltwin      > launch an eviltwin attack
     honeypot      > launch a rogue access point attack
 
 Commands:
@@ -54,13 +54,13 @@ Commands:
 ```
 
 ## Possible Improvements
-- [x] Add a command to show the status of the running commands in the background
-- [ ] Add WPA/WPA2 support for honeypot
-- [ ] Bash autocompletion
-- [x] Improve the stability
-- [x] Improve the UI (e.g. uniformise the style)
-- [x] Source code optimisation
-- [ ] Validate all user inputs against regexes
+- [ ] Add WPA/WPA2 support for honeypot.
+- [ ] Bash autocompletion.
+- [x] Optimise the source code.
+- [x] Improve the stability.
+- [x] Improve the UI (e.g. uniformise the style and colors).
+- [x] Show the status of processes running in the background.
+- [ ] Validate all user inputs against regexes.
 
 ## Project Information
 This script was developed in the context of my master thesis work in June 2015.
