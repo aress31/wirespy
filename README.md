@@ -18,11 +18,11 @@ Two type of attacks are supported at the moment:
 * **Honeypot**: Set up a simple rogue hotspot and wait for clients to connect.
 
 ## Features
-* Capture victims' traffic
-* MAC address spoofing
-* Set-up honeypot and evil twin attacks
-* Show the list of in range access point and their details 
-* Wireless adapter|card|dongle power amplification
+* Capture victims' traffic.
+* MAC address spoofing.
+* Set-up honeypot and evil twin attacks.
+* Show the list of in range access points.
+* Wireless adapter|card|dongle power amplification.
 
 ## Usage
 1. Make the script executable:
