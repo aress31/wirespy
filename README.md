@@ -15,12 +15,12 @@
 
 Two type of attacks are supported at the moment:
 * **Honeypot**: Set up a simple rogue hotspot and wait for clients to connect.
-* **Eviltwin**: Force victims to auto-connect to the honeypot by spoofing a *"trusted"* hotspot (clone an existing access point and de-authenticate its users to force them to transparently connect to the spoofed honeypot).
+* **Evil twin**: Force victims to auto-connect to the honeypot by spoofing a *"trusted"* hotspot (clone an existing access point and de-authenticate its users to force them to transparently connect to the spoofed honeypot).
 
 ## Features
 * Capture victims' traffic
 * MAC address spoofing
-* Set-up honeypot and eviltwin attacks
+* Set-up honeypot and evil twin attacks
 * Show the list of in range access point and their details 
 * Wireless adapter|card|dongle power amplification
 
@@ -89,4 +89,4 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-   limitations under the License. 
+   limitations under the License.
