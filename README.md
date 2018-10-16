@@ -71,11 +71,10 @@ The project was presented on Pentester Academy TV's toolbox in 2017:
 
 Work on a new improved version has commenced in 2018.
 
-## Donation
-If you want to support my work doing a donation, it will be very much appreciated:
-* Bitcoin       : **15aFaQaW9cxa4tRocax349JJ7RKyj7YV1p**
-* Bitcoin Cash  : **qqez5ed5wjpwq9znyuhd2hdg86nquqpjcgkm3t8mg3**
-* Ether         : **0x70bC178EC44500C17B554E62BC31EA2B6251f64B**
+## One-time donation
+* Donate via Bitcoin      : **15aFaQaW9cxa4tRocax349JJ7RKyj7YV1p**
+* Donate via Bitcoin Cash : **qqez5ed5wjpwq9znyuhd2hdg86nquqpjcgkm3t8mg3**
+* Donate via Ether        : **0x70bC178EC44500C17B554E62BC31EA2B6251f64B**
 
 ## License
    Copyright (C) 2015 - 2018 Alexandre Teyar
