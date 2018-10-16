@@ -14,18 +14,15 @@
 **WireSpy** allows attackers to set up quick honeypots to carry out **MITMAs**. Monitoring and logging functionality is implemented in order to keep records of the victims' traffic/activities. Other tools can be used together with Wirespy to conduct more advanced attacks. 
 
 Two type of attacks are supported at the moment:
-* **Honeypot**     : set up a simple rogue hotspot and wait for clients to connect
-* **Evil-twin**    : force victims to auto-connect to the honeyspot by spoofing a *"trusted"* hotspot
+* **Evil twin**: Force victims to auto-connect to the honeypot by spoofing a *"trusted"* hotspot (clone an existing access point and de-authenticate its users to force them to transparently connect to the spoofed honeypot).
+* **Honeypot**: Set up a simple rogue hotspot and wait for clients to connect.
 
 ## Features
-* Amplificate the wireless adapter/dongle power
+* Capture victims' traffic
 * MAC address spoofing
-* Set-up rogue access-point aka honeypot
-* Further evil-twin attack: 
-    1. Clone an access-point
-    2. De-authenticate its users to force them to transparently auto-connect  
-      to the evil-twin (spoofed) access-point
-* Capture the victims' traffic
+* Set-up honeypot and evil twin attacks
+* Show the list of in range access point and their details 
+* Wireless adapter|card|dongle power amplification
 
 ## Usage
 1. Make the script executable:
@@ -36,17 +33,34 @@ $ chmod +x wirespy.sh
 ```console
 $ sudo ./wirespy.sh
 ```
-3. Type `help` to display the list of available commands
+3. Type `help` to display the list of available commands.
+
+### Available commands
+```shell
+Attacks:
+    eviltwin      > launch an evil twin attack
+    honeypot      > launch a rogue access point attack
+
+Commands:
+    clear         > clear the terminal
+    help          > list available commands
+    quit|exit     > exit the program
+    apscan        > show all wireless access points nearby
+    leases        > display DHCP leases
+    powerup       > power wireless interface up (may cause issues)
+    start capture > start packet capture (tcpdump)
+    stop capture  > stop packet capture (tcpdump)
+    status        > show modules status
+```
 
 ## Possible Improvements
-- [ ] Add new features such as:
-  - [ ] Bash autocompletion
-  - [ ] Validate all user inputs against regexes
-  - [ ] Add WPA/WPA2 support for honeypot
-  - [x] Add a command to show the status of the running commands in the background
-- [ ] Improve the stability
-- [ ] Improve the UI (e.g. uniformise the style)
-- [ ] Source code optimisation
+- [ ] Add WPA/WPA2 support for honeypot.
+- [ ] Bash autocompletion.
+- [x] Optimise the source code.
+- [x] Improve the stability.
+- [x] Improve the UI (e.g. uniformise the style and colors).
+- [x] Show the status of processes running in the background.
+- [ ] Validate all user inputs against regexes.
 
 ## Project Information
 This script was developed in the context of my master thesis work in June 2015.
@@ -57,11 +71,10 @@ The project was presented on Pentester Academy TV's toolbox in 2017:
 
 Work on a new improved version has commenced in 2018.
 
-## Donation
-If you want to support my work doing a donation, it will be very much appreciated:
-* Bitcoin       : **15aFaQaW9cxa4tRocax349JJ7RKyj7YV1p**
-* Bitcoin Cash  : **qqez5ed5wjpwq9znyuhd2hdg86nquqpjcgkm3t8mg3**
-* Ether         : **0x70bC178EC44500C17B554E62BC31EA2B6251f64B**
+## One-time donation
+* Donate via Bitcoin      : **15aFaQaW9cxa4tRocax349JJ7RKyj7YV1p**
+* Donate via Bitcoin Cash : **qqez5ed5wjpwq9znyuhd2hdg86nquqpjcgkm3t8mg3**
+* Donate via Ether        : **0x70bC178EC44500C17B554E62BC31EA2B6251f64B**
 
 ## License
    Copyright (C) 2015 - 2018 Alexandre Teyar
@@ -76,4 +89,4 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-   limitations under the License. 
+   limitations under the License.
