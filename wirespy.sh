@@ -27,9 +27,9 @@
 declare -gr  PROGNAME=$(basename $0)
 declare -gr  PROGBASENAME=${PROGNAME%%.*}
 declare -gr  PROGDIR=$(dirname ${BASH_SOURCE[0]})
-declare -gr  PROGVERSION=0.6
+declare -gr  PROGVERSION=0.6.1
 declare -gr  GIT_BRANCH='master'
-declare -gar REQUIRED_PACKAGES=( # to comment when experiencing any issue with the dependencies
+declare -gar REQUIRED_PACKAGES=(
     'aircrack-ng'
     'coreutils'
     'git'
@@ -124,7 +124,7 @@ function checkCompatibility() {
     if ((BASH_VERSINFO[0] < 4))
     then 
         eflag=true
-        printError "A minimum of bash version 4.0 is required. Upgrade your version with: sudo apt-get install --only-upgrade bash"
+        printError "A minimum of bash version 4.0 is required. Upgrade your version with (Debian-specific command): sudo apt-get install --only-upgrade bash"
     else
         print 'The bash minimum version requirement is satisfied'
     fi
@@ -132,12 +132,12 @@ function checkCompatibility() {
     print 'Dependencies check...'
     for package in ${REQUIRED_PACKAGES[@]}
     do
-        if [[ $(dpkg -s $package 2> /dev/null) ]]
+        if [[ $(which $package) ]] # use which to be less debian-specific
         then
             continue
         else
             eflag=true
-            printError "The $package package is missing. Install it with: sudo apt-get install $package -y"
+            printError "The $package package is missing. Install it with (Debian-specific command): sudo apt-get install $package -y"
         fi
     done
 
@@ -896,5 +896,5 @@ fi
 
 banner
 checkUpdate
-checkCompatibility
+checkCompatibility # to comment in case of issues with the dependencies
 menu
