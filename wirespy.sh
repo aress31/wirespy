@@ -132,7 +132,7 @@ function checkCompatibility() {
     print 'Dependencies check...'
     for package in ${REQUIRED_PACKAGES[@]}
     do
-        if [[ $(which $package) ]] # use which to be less debian-specific
+        if [[ $(dpkg -s $package 2> /dev/null) || $(rpm -q --quiet $package 2> /dev/null) || $(pacman -Qi $package 2> /dev/null) ]]
         then
             continue
         else
@@ -141,12 +141,13 @@ function checkCompatibility() {
         fi
     done
 
+    print "All of the required packages are already installed"
+
     if [[ $eflag = true ]]
     then
         exit 1
     fi
 
-    print "All of the required packages are already installed"
     echo '' # add new line
 }
 

@@ -17,6 +17,9 @@ Two type of attacks are supported at the moment:
 * **Evil twin**: Force victims to auto-connect to the honeypot by spoofing a *"trusted"* hotspot (clone an existing access point and de-authenticate its users to force them to transparently connect to the spoofed honeypot).
 * **Honeypot**: Set up a simple rogue hotspot and wait for clients to connect.
 
+**If any issues are encountered with the script dependencies, make sure that all the dependencies are met and comment the line 900 (by adding a `#` at the very beginning of the line):**
+`checkCompatibility # to comment in case of issues with the dependencies` to `# checkCompatibility # to comment in case of issues with the dependencies`
+
 ## Features
 * Capture victims' traffic.
 * MAC address spoofing.
