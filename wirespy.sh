@@ -108,7 +108,7 @@ function checkUpdate() {
     then
         if [[ $(git diff --name-only origin/$GIT_BRANCH -- ${0}) ]]
         then
-            print 'A new version is available, consider updating using the command: git reset --hard && git pull origin $GIT_BRANCH --rebase'
+            print "A new version is available, consider updating using the command: git reset --hard && git pull origin $GIT_BRANCH --rebase"
         else
             print 'This is the latest stable version'
         fi
