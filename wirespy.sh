@@ -132,7 +132,7 @@ function checkCompatibility() {
     print 'Dependencies check...'
     for package in ${REQUIRED_PACKAGES[@]}
     do
-        if [[ $(dpkg -s $package 2> /dev/null) || $(rpm -q --quiet $package 2> /dev/null) || $(pacman -Qi $package 2> /dev/null) ]]
+        if [[ $(dpkg -s $package 2> /dev/null) || $(rpm -q --quiet $package 2> /dev/null) || $(pacman -Qi $package 2> /dev/null) ]] # this line needs to be fixed
         then
             continue
         else
