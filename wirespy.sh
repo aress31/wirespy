@@ -141,12 +141,12 @@ function checkCompatibility() {
         fi
     done
 
-    print "All of the required packages are already installed"
-
     if [[ $eflag = true ]]
     then
         exit 1
     fi
+
+    print "All of the required packages are already installed"
 
     echo '' # add new line
 }
