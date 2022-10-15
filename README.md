@@ -26,7 +26,7 @@ Two type of attacks are supported at the moment:
 
 ## Usage
 
-1. Set the script as `executable`:
+1. Set as `executable`:
 
    ```bash
    chmod +x wirespy.sh
