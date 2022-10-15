@@ -40,22 +40,22 @@ Two type of attacks are supported at the moment:
 
 3. Type `help` to get started.
 
-    ```bash
-    Attacks:
-        eviltwin      > launch an evil twin attack
-        honeypot      > launch a rogue access point attack
+   ```bash
+   Attacks:
+       eviltwin      > launch an evil twin attack
+       honeypot      > launch a rogue access point attack
 
-    Commands:
-        clear         > clear the terminal
-        help          > list available commands
-        quit|exit     > exit the program
-        apscan        > show all wireless access points nearby
-        leases        > display DHCP leases
-        powerup       > power wireless interface up (may cause issues)
-        start capture > start packet capture (tcpdump)
-        stop capture  > stop packet capture (tcpdump)
-        status        > show modules status
-    ```
+   Commands:
+       clear         > clear the terminal
+       help          > list available commands
+       quit|exit     > exit the program
+       apscan        > show all wireless access points nearby
+       leases        > display DHCP leases
+       powerup       > power wireless interface up (may cause issues)
+       start capture > start packet capture (tcpdump)
+       stop capture  > stop packet capture (tcpdump)
+       status        > show modules status
+   ```
 
 ## Roadmap
 
@@ -69,7 +69,7 @@ Two type of attacks are supported at the moment:
 
 ## Project Information
 
-This script was developed in the context of my master thesis work in June 2015.
+This script was developed in the context of my [master thesis work](https://www.slideshare.net/AlexandreTeyar/security-in-mobile-banking-apps-154409860) in June 2015.
 
 The project was presented on Pentester Academy TV's toolbox in 2017:
 
